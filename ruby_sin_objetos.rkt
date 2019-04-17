@@ -245,15 +245,15 @@
               (for-each (lambda (arg)
                           (if (check-apply-env env arg) (pretty-display (apply-env env arg))
                           (pretty-display arg)))
-                        (map (lambda(x) (eval-comp-value x env)) vals)))        
+                        (map (lambda(x) (eval-comp-value x env)) vals)))
+    (function-exp (name ids batch) (extend-env (list name) (list (closure ids batch env)) env))
     ;---->Creo que empezaría así
     ;(declare-exp (identifier identifiers) exps)
     ;if-exp
     ;unless-exp
     ;while-exp
     ;until-exp
-    ;for-exp
-    ;function-exp
+    ;for-exp    
     ;return-exp
     (else "TO DO")))
 
