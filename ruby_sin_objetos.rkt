@@ -364,6 +364,7 @@
                        a-val ;<--- lista del arreglo
                        (map (lambda (x) (eval-call x env))(is-comp-calls-empty calls env));<---lista de posiciones
                        ))
+              
     
     (binop-val (bin-op comp-value) (apply-op bin-op (reverse(list (eval-comp-value comp-value env) a-val))))))
 
@@ -374,17 +375,59 @@
     (else "")))
 
 #|Eval-args evalua un argumento en un ambiente|#
-(define (eval-args args s-val env)
-  (cases arguments args  
-    (some-arguments (comp-values) (map (lambda (x) (eval-comp-value x env)) comp-values))
-  
-    (arr-arguments (comp-value comp-values) (map (lambda (x) (eval-comp-value x env)) comp-values))))
+(define (eval-args arg env)
+  (cases arguments arg
+    #|Si es de tipo some-arguments simplemente evalua el comp-value en eval-comp-value|#
+    (some-arguments (comp-value) (map (lambda (x)(eval-comp-value x env))
+                                                       comp-value))
+    #|Si es de tipo arreglo el argumento, uso eval-comp-value para evaluar el comp-value (no sé que hacer con
+el comp-values porque ni siquiera sé que debería contener)|#
+    (arr-arguments (comp-value comp-values) (append(list(eval-comp-value comp-value env))
+                                                  (map (lambda (x)(eval-comp-value x env))
+                                                       comp-values)
+                                                  ))))
 
-#|Extrae un dato de una lista compuesta (lista1) a partir de unas posiciones almacenadas en una lista simple (lista2)|#
-(define (encontrar lista1 lista2)
+(define (encontrar lis-vals lis-pos)
+  (cond
+    [(and (andmap number? lis-vals) (andmap list? lis-pos)) "Error"]
+    [(not (and (= 1 (length lis-vals)) (= 1(length lis-pos)))) (general lis-vals lis-pos)]
+    
+    #|Arreglo simple, posición simple|#
+    [else (simple-range-array (caar lis-pos) (if (= 1 (length(car lis-pos)))
+                                          (caar lis-pos) (cadar lis-pos)) (car lis-vals) (car lis-vals))]))
+
+#|Arreglo simple, posición simple|#
+(define (simple-range-array in end lis ac)
+  (cond
+    [(or (< in 0)  (> end (- (length ac) 1))) "Error"]
+    [(empty? lis) '()]
+    [(= in end) (list (list-ref lis in))]
+    [else (append (list (list-ref lis in)) (simple-range-array (+ in 1) end lis ac))]))
+
+
+
+
+
+(define (encon lista1 lista2)
   (cond
     [(number? lista1) lista1]
-    [else (encontrar (list-ref lista1 (car lista2)) (cdr lista2))]))
+    [(andmap number? lista1) lista1]
+    [else (encon (list-ref lista1 (caar lista2)) (cdr lista2))]))
+
+(define (bo lista)
+  (map (lambda (x) (= 1 (length x)))lista))
+
+(define (general lista1 lista2)
+  (cond
+    [(and (equal? #t (car (bo lista2)))
+          (equal? #t (cadr (bo lista2)))) (encon lista1 lista2)]
+    
+    [(or(and (equal? #f (car (bo lista2)))
+             (equal? #f (cadr (bo lista2))))
+        (and (equal?  #f (car (bo lista2)))
+             (equal? #t (cadr (bo lista2))))) "Error de ingreso"]
+    
+    [else (encontrar (list(encon lista1 lista2)) (cdr lista2))]))
 
 ; eval-simple-value s-val env (cases simple-value s-val (id-val ...) (num-val ...) (true-val ...))
 ;   evalúa un valor simple, comprende los casos desde id-val hasta arr-val
