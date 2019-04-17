@@ -225,13 +225,6 @@
      (let ((next-env (eval-expression (car exps) env)))
        (if (environment? next-env) (eval-expressions (cdr exps) next-env)
            (eval-expressions (cdr exps) env)))))
-  #|(let loop ((acc (eval-expression exp env))
-                             (exps exps))
-                    (if (null? exps) 
-                        (if (void? acc) (begin (display "=> ") 'nil) acc)
-                        (loop (eval-expression (car exps) 
-                                               env)
-                              (cdr exps)))))|#
 
 (define (eval-expression exp env)
   (cases expression exp
@@ -256,13 +249,11 @@
                                                  (if (empty? else-batch)
                                                      (void)
                                                      (eval-exp-batch (car else-batch) env))))
-<<<<<<< HEAD
     (function-exp (name ids batch) (a-recursive-env name ids batch env))
     
     
     ;---->Creo que empezaría así
     ;(declare-exp (identifier identifiers) exps)
-=======
     (while-exp (comp-bool batch) (if (eqv? "true" (eval-comp-value comp-bool env))
                                      (let ((new-env(eval-exp-batch batch env)))
                                        (if (environment? new-env)
@@ -274,10 +265,7 @@
                                        (if (environment? new-env)
                                            (eval-expression (until-exp comp-bool batch) new-env)
                                            (eval-expression (until-exp comp-bool batch) env)))
-                                     (void)))
->>>>>>> 540b808ab5e3060491e5f6058664edfe558c22d3
-    ;while-exp
-    ;until-exp
+                                     (void)))   
     ;for-exp    
     ;return-exp
     (else "TO DO")))
@@ -294,7 +282,6 @@
 (define eval-complement-ass
   (lambda (comp-value calls env)
     (cond
-<<<<<<< HEAD
       ((is-comp-calls-empty calls env) (eval-comp-value comp-value env))
       (else (let ((proc (apply-env env (eval-comp-value comp-value env))))
               (if (procval? proc)
@@ -304,27 +291,16 @@
 
 (define (eval-calls cls env)
   (cases calls cls
-    (some-calls (calls) (eval-call calls env))))
-
-(define (eval-call cl env)
-  (cases call cl
-    (arguments-call (argument) (map (lambda (x) (eval-comp-value x env)) argument))))                        
-=======
-      ((empty?(is-comp-calls-empty calls env)) (eval-comp-value comp-value env))
-      (else "TODO-handle proc calls"))))
->>>>>>> 540b808ab5e3060491e5f6058664edfe558c22d3
-
+    (some-calls (calls)
+                (if (empty? calls)
+                    '()
+                    (cons (eval-call (car calls) env) (eval-calls (some-calls (cdr calls)) env))))))
 
 (define (is-comp-calls-empty cls env)
   (cases calls cls
-<<<<<<< HEAD
-    (some-calls (cls) (empty? cls))
-    (else (display "not a compl-call"))))
-=======
     (some-calls (cls) cls) ;<-- Aquí iba (empty? cls) porque ese bool lo usaba eval-complement-ass
                            ;Así que para no afectar eso, lo pregunté directamente en el eval-complement-ass
     (else "")))
->>>>>>> 540b808ab5e3060491e5f6058664edfe558c22d3
 
 
 (define (apply-complement s-val compl env)
@@ -347,10 +323,8 @@
                   (begin
                     (setref! id arg)
                     arg)))
-;-----------------------------------------------------------------------------------------------------------------
-    (comp-calls (calls)
-                (apply-env env(eval-simple-value s-val env)))));--->No sé para qué es calls
-;----------------------------------------------------------------------------------------------------------------------
+    (comp-calls (calls) (display (eval-calls calls env)))))
+                
 
 (define (eval-comp-value c-value env)
   (cases comp-value c-value
@@ -400,13 +374,11 @@
     (else "")))
 
 #|Eval-args evalua un argumento en un ambiente|#
-(define (eval-args arg env)
-  (cases arguments arg
-    #|Si es de tipo some-arguments simplemente evalua el comp-value en eval-comp-value|#
-    (some-arguments (comp-value) (eval-comp-value comp-value env))
-    #|Si es de tipo arreglo el argumento, uso eval-comp-value para evaluar el comp-value (no sé que hacer con
-el comp-values porque ni siquiera sé que debería contener)|#
-    (arr-arguments (comp-value comp-values)(eval-comp-value comp-value env))))
+(define (eval-args args s-val env)
+  (cases arguments args  
+    (some-arguments (comp-values) (map (lambda (x) (eval-comp-value x env)) comp-values))
+  
+    (arr-arguments (comp-value comp-values) (map (lambda (x) (eval-comp-value x env)) comp-values))))
 
 #|Extrae un dato de una lista compuesta (lista1) a partir de unas posiciones almacenadas en una lista simple (lista2)|#
 (define (encontrar lista1 lista2)
