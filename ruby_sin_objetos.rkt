@@ -260,6 +260,18 @@
                                                  (if (empty? else-batch)
                                                      (void)
                                                      (eval-exp-batch (car else-batch) env))))
+    (while-exp (comp-bool batch) (if (eqv? "true" (eval-comp-value comp-bool env))
+                                     (let ((new-env(eval-exp-batch batch env)))
+                                       (if (environment? new-env)
+                                           (eval-expression (while-exp comp-bool batch) new-env)
+                                           (eval-expression (while-exp comp-bool batch) env)))
+                                     (void)))
+    (until-exp (comp-bool batch) (if (eqv? "false" (eval-comp-value comp-bool env))
+                                     (let ((new-env(eval-exp-batch batch env)))
+                                       (if (environment? new-env)
+                                           (eval-expression (until-exp comp-bool batch) new-env)
+                                           (eval-expression (until-exp comp-bool batch) env)))
+                                     (void)))
     ;while-exp
     ;until-exp
     ;for-exp
