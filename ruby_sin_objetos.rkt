@@ -256,17 +256,10 @@
     ;function-exp
     ;return-exp
     (else "TO DO")))
-    
-  
 
-#|Función que me sirve para sacar una id de una estructura simple|#
-(define (regresar ids)
-  (cases simple-value ids
-    (id-val (identifier) (list identifier))
-    (else "TO DO")))
 
 (define (asignar exps ids args env)
-  (if (equal? exps '())'() (eval-expressions (car exps) (cdr exps) (extend-env ids args env))))
+  (if (equal? exps '())'() (eval-expressions exps (extend-env ids args env))))
 
 (define (eval-simple-exp s-exp env)
   (cases simple-exp s-exp
@@ -290,7 +283,7 @@
             (let ((id (apply-env-ref env (eval-simple-value s-val env))) (val (eval-complement-ass comp-value calls env)))
               (begin
                 (setref! id val)
-                val)))                  
+                val)))                     
     
 ;-----------------------------------------------------------------------------------------------------------------
 #|Lo que hacemos aquí es:
@@ -298,19 +291,15 @@
   2) ids  = lista(id)
   3) evaluar el resto de expresiones con base en un nuevo ambiente extendido que contiene ids args y el env-0|#
     (assign-and (assign-op comp-value calls)
-                (let((args(list(apply-assign assign-op(append (list(eval-simple-value s-val env))
-                                                              (list(eval-comp-value comp-value env))))))
-                     (ids (regresar s-val)))
-                  (asignar ids args env)))
+                (let((arg (apply-assign assign-op(append (list(apply-env env (eval-simple-value s-val env)))
+                                                         (list(eval-comp-value comp-value env)))))
+                     (id (apply-env-ref env (eval-simple-value s-val env))))
+                  (begin
+                    (setref! id arg)
+                    arg)))
 ;-----------------------------------------------------------------------------------------------------------------
     (comp-calls (calls)
-#|Lo que hacemos aquí es que la estructura de tipo comp-calls devuelva s-val (que es la id) evaluada
-  en el ambiente extendido (recordemos que es extendido gracias al assign). Al retornar la id evaluada en el ambiente,
-la convierto en lista y la concateno con la llamada de eval-expressions pero esta vez con el resto del cuerpo o
-expresiones que tengo, no sin antes, estar seguros a través de un if, que mi variable exps no esté vacía.|#
-                (append
-                   (list(eval-simple-value s-val env))
-                  (if (equal? 'exps '())'()(eval-expressions (car '(exps)) (cdr '(exps)) env))))));--->No sé para qué es calls
+                (apply-env env(eval-simple-value s-val env)))));--->No sé para qué es calls
 ;----------------------------------------------------------------------------------------------------------------------
 
 (define (eval-comp-value c-value env)
@@ -332,7 +321,9 @@ expresiones que tengo, no sin antes, estar seguros a través de un if, que mi va
 ;        a-val-compl (c-val es un comp-value, a-val-compl es un val-compl)
 (define (eval-value a-value env)
   (cases value a-value
-    (a-s-val (simple-value)(eval-simple-value simple-value env))
+    (a-s-val (simple-value)(if (symbol? (eval-simple-value simple-value env))
+                               (apply-env env (eval-simple-value simple-value env))
+                               (eval-simple-value simple-value env)))
     (compl-val (comp-value val-compl) (eval-val-compl (eval-comp-value comp-value env) val-compl env))))
 
 ; eval-val-compl a-val a-val-compl env => (cases val-compl a-val-compl (val-call ...) (binop-val ...))
@@ -439,7 +430,7 @@ cuantas veces repetir mi cadena|#
       (and (number? (car lista)) (string? (cadr lista)) (eq? sys 'mult)))
 
      ;---AQUÍ LO QUE HAGO ES LIMPIAR MI CADENA DE ESTO: #\"
-      (list->string(eliminar(string->list(mul (cadr lista) (car lista)))))]
+      (list->string(eliminar(string->list(mul (car lista) (cadr lista)))))]
     ;---------------------------------------------------
     
     #|Si no se cumple que almenos uno sea cadena entonces hay que verificar si ambos son números. Así,
@@ -461,20 +452,20 @@ ya se trate de una suma o una multiplicación, los puedo operar de manera común
 
 #|Suma dos arreglos teniendo en cuenta la manera en que son recibidos|#
 (define (operar lista1 lista2)
-  (append lista1 lista2))
-  #|(cond
+  (cond
     [(and (equal? lista1 '()) (equal? lista2 '())) '()]
     [(append (list (+ (car lista1)
                       (car lista2)))
              (operar (cdr lista1)
-                     (cdr lista2)))]))|#
+                     (cdr lista2)))]))
 
 #|MULTIPLICAR CADENAS|#
 #|Esta función crea una sola cadena que realmente es una cadena repetida n veces|#
-(define (mul n cadena)
+(define (mul cadena n)
   (cond
+    [(and (number? cadena) (string? n)) (mul n cadena)]
     [(= n 0) ""]
-    [(string-append cadena (mul (- n 1) cadena))]))
+    [(string-append cadena (mul cadena (- n 1)))]))
 
 #|ELIMINAR DIAGONALES DEL TEXTO|#
 #|dado a que las cadenas son acompañadas por un #\" entonces hago esta función para eliminarlas y devolver una
