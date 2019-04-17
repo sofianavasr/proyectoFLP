@@ -461,19 +461,20 @@ ya se trate de una suma o una multiplicación, los puedo operar de manera común
 
 #|Suma dos arreglos teniendo en cuenta la manera en que son recibidos|#
 (define (operar lista1 lista2)
-  (cond
+  (append lista1 lista2))
+  #|(cond
     [(and (equal? lista1 '()) (equal? lista2 '())) '()]
     [(append (list (+ (car lista1)
                       (car lista2)))
              (operar (cdr lista1)
-                     (cdr lista2)))]))
+                     (cdr lista2)))]))|#
 
 #|MULTIPLICAR CADENAS|#
 #|Esta función crea una sola cadena que realmente es una cadena repetida n veces|#
-(define (mul cadena n)
+(define (mul n cadena)
   (cond
     [(= n 0) ""]
-    [(string-append cadena (mul cadena (- n 1)))]))
+    [(string-append cadena (mul (- n 1) cadena))]))
 
 #|ELIMINAR DIAGONALES DEL TEXTO|#
 #|dado a que las cadenas son acompañadas por un #\" entonces hago esta función para eliminarlas y devolver una
