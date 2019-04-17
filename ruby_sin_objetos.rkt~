@@ -256,10 +256,17 @@
     ;function-exp
     ;return-exp
     (else "TO DO")))
+    
+  
 
+#|Función que me sirve para sacar una id de una estructura simple|#
+(define (regresar ids)
+  (cases simple-value ids
+    (id-val (identifier) (list identifier))
+    (else "TO DO")))
 
 (define (asignar exps ids args env)
-  (if (equal? exps '())'() (eval-expressions exps (extend-env ids args env))))
+  (if (equal? exps '())'() (eval-expressions (car exps) (cdr exps) (extend-env ids args env))))
 
 (define (eval-simple-exp s-exp env)
   (cases simple-exp s-exp
@@ -283,7 +290,7 @@
             (let ((id (apply-env-ref env (eval-simple-value s-val env))) (val (eval-complement-ass comp-value calls env)))
               (begin
                 (setref! id val)
-                val)))                     
+                val)))                  
     
 ;-----------------------------------------------------------------------------------------------------------------
 #|Lo que hacemos aquí es:
@@ -291,15 +298,19 @@
   2) ids  = lista(id)
   3) evaluar el resto de expresiones con base en un nuevo ambiente extendido que contiene ids args y el env-0|#
     (assign-and (assign-op comp-value calls)
-                (let((arg (apply-assign assign-op(append (list(apply-env env (eval-simple-value s-val env)))
-                                                         (list(eval-comp-value comp-value env)))))
-                     (id (apply-env-ref env (eval-simple-value s-val env))))
-                  (begin
-                    (setref! id arg)
-                    arg)))
+                (let((args(list(apply-assign assign-op(append (list(eval-simple-value s-val env))
+                                                              (list(eval-comp-value comp-value env))))))
+                     (ids (regresar s-val)))
+                  (asignar ids args env)))
 ;-----------------------------------------------------------------------------------------------------------------
     (comp-calls (calls)
-                (apply-env env(eval-simple-value s-val env)))));--->No sé para qué es calls
+#|Lo que hacemos aquí es que la estructura de tipo comp-calls devuelva s-val (que es la id) evaluada
+  en el ambiente extendido (recordemos que es extendido gracias al assign). Al retornar la id evaluada en el ambiente,
+la convierto en lista y la concateno con la llamada de eval-expressions pero esta vez con el resto del cuerpo o
+expresiones que tengo, no sin antes, estar seguros a través de un if, que mi variable exps no esté vacía.|#
+                (append
+                   (list(eval-simple-value s-val env))
+                  (if (equal? 'exps '())'()(eval-expressions (car '(exps)) (cdr '(exps)) env))))));--->No sé para qué es calls
 ;----------------------------------------------------------------------------------------------------------------------
 
 (define (eval-comp-value c-value env)
@@ -321,9 +332,7 @@
 ;        a-val-compl (c-val es un comp-value, a-val-compl es un val-compl)
 (define (eval-value a-value env)
   (cases value a-value
-    (a-s-val (simple-value)(if (symbol? (eval-simple-value simple-value env))
-                               (apply-env env (eval-simple-value simple-value env))
-                               (eval-simple-value simple-value env)))
+    (a-s-val (simple-value)(eval-simple-value simple-value env))
     (compl-val (comp-value val-compl) (eval-val-compl (eval-comp-value comp-value env) val-compl env))))
 
 ; eval-val-compl a-val a-val-compl env => (cases val-compl a-val-compl (val-call ...) (binop-val ...))
@@ -334,7 +343,7 @@
 
 (define (eval-val-compl a-val a-val-compl env)
   (cases val-compl a-val-compl
-    (val-call (calls) a-val) ;---->No sé qué hacer aquí
+    (val-call (calls) a-val-compl) ;---->No sé qué hacer aquí
     (binop-val (bin-op comp-value) (apply-op bin-op (reverse(list (eval-comp-value comp-value env) a-val))))))
 
 ; eval-simple-value s-val env (cases simple-value s-val (id-val ...) (num-val ...) (true-val ...))
@@ -357,23 +366,19 @@
      (diff () (- (car args) (cadr args)))
      (mult () (operacion args 'mult))
      (div () (/ (car args) (cadr args)))
-     (mod () (modulo (car args) (cadr args)))
+     (mod () (mod (car args) (cadr args)))
      (pow ()(potencia (car args) (cadr args)))
-     (great () (if (> (car args) (cadr args)) "true" "false"))
-     (great-eq () (if (>= (car args) (cadr args)) "true" "false"))
-     (less () (if (< (car args) (cadr args)) "true" "false"))
-     (less-eq () (if (<= (car args) (cadr args)) "true" "false"))
-     (equal () (if (equal? (car args) (cadr args)) "true" "false"))
-     (not-equal () (if (not(equal? (car args) (cadr args))) "true" "false"))
-     (and-op () (if (and (eval-bool (car args)) (eval-bool (cadr args))) "true" "false"))
-     (or-op () (if (or (eval-bool (car args)) (eval-bool (cadr args))) "true" "false"))
+     (great () (> (car args) (cadr args)))
+     (great-eq () (>= (car args) (cadr args)))
+     (less () (< (car args) (cadr args)))
+     (less-eq () (<= (car args) (cadr args)))
+     (equal () (equal? (car args) (cadr args)))
+     (not-equal () (not(equal? (car args) (cadr args))))
+     (and-op () (and (car args) (cadr args)))
+     (or-op () (or (car args) (cadr args)))
      (in-range () (rango (car args) (cadr args) 'in))
      (ex-range () (rango (car args) (cadr args) 'ex))
      (st-range () "#<void>")));---->No sé qué debería retornar esto
-
-(define eval-bool
-  (lambda (val)
-    (if (eqv? val "true") #t #f)))
 
 (define (apply-assign op args)
   (cases assign-op op
@@ -434,7 +439,7 @@ cuantas veces repetir mi cadena|#
       (and (number? (car lista)) (string? (cadr lista)) (eq? sys 'mult)))
 
      ;---AQUÍ LO QUE HAGO ES LIMPIAR MI CADENA DE ESTO: #\"
-      (list->string(eliminar(string->list(mul (car lista) (cadr lista)))))]
+      (list->string(eliminar(string->list(mul (cadr lista) (car lista)))))]
     ;---------------------------------------------------
     
     #|Si no se cumple que almenos uno sea cadena entonces hay que verificar si ambos son números. Así,
@@ -467,7 +472,6 @@ ya se trate de una suma o una multiplicación, los puedo operar de manera común
 #|Esta función crea una sola cadena que realmente es una cadena repetida n veces|#
 (define (mul cadena n)
   (cond
-    [(and (number? cadena) (string? n)) (mul n cadena)]
     [(= n 0) ""]
     [(string-append cadena (mul cadena (- n 1)))]))
 
@@ -572,7 +576,7 @@ cadena más limpia|#
   (lambda (env sym)
     (cases environment env
       (empty-env-record ()
-                        (eopl:error 'Error "undefined local variable or method ~s" sym))
+                        (eopl:error 'empty-env "No binding for ~s" sym))
       (extended-env-record (syms vals env)
                            (let ((pos (rib-find-position sym syms)))
                              (if (number? pos)
