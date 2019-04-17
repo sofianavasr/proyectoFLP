@@ -278,13 +278,14 @@
 (define eval-complement-ass
   (lambda (comp-value calls env)
     (cond
-      ((is-comp-calls-empty calls env) (eval-comp-value comp-value env))
+      ((empty?(is-comp-calls-empty calls env)) (eval-comp-value comp-value env))
       (else "TODO-handle proc calls"))))
 
 
 (define (is-comp-calls-empty cls env)
   (cases calls cls
-    (some-calls (cls) cls)
+    (some-calls (cls) cls) ;<-- Aquí iba (empty? cls) porque ese bool lo usaba eval-complement-ass
+                           ;Así que para no afectar eso, lo pregunté directamente en el eval-complement-ass
     (else "")))
 
 
@@ -344,37 +345,32 @@
 ;       de c-val (c-val es un comp-value)
 
 
-#|   ;;Calls
-     ;; 0 o muchas llamadas
-     (calls ((arbno call)) some-calls)
 
-     ;;Call
-     (call (arguments) arguments-call)
-
-     ;;Argumentos
-     ;; llamar una función puede tener 0 argumentos o muchos
-     (arguments ("(" (separated-list comp-value ",") ")") some-arguments)
-     ;; almenos 1 argumento para llamar acceder a un elemento en un arreglo
-     ;; máximo 2, ejemplo: a=[1,2,3]; a[1] #output 2; a[1,2] #output [2,3];
-     ;;                    a[1,2,3] #output Error
-     (arguments ("[" comp-value (arbno "," comp-value) "]") arr-arguments)|#
 (define (eval-val-compl a-val a-val-compl env)
   (cases val-compl a-val-compl
-    (val-call (calls) (encontrar
-                       a-val
-                       (map (lambda (x) (eval-call x env))(is-comp-calls-empty calls env)))) ;---->No sé qué hacer aquí
+    (val-call (calls) (encontrar ;<--- encuentra un dato de un arreglo con otra lista que suponemos es de posiciones
+                       a-val ;<--- lista del arreglo
+                       (map (lambda (x) (eval-call x env))(is-comp-calls-empty calls env));<---lista de posiciones
+                       ))
+    
     (binop-val (bin-op comp-value) (apply-op bin-op (reverse(list (eval-comp-value comp-value env) a-val))))))
 
+#|eval-call recibe una call en vez de una lista calls, un call puede ser arguments-call|#
 (define (eval-call cl env)
   (cases call cl
-    (arguments-call (arguments) (eval-args arguments env))
+    (arguments-call (arguments) (eval-args arguments env));<--Si es así, evaluo los argumentos en el ambiente ingresado
     (else "")))
 
+#|Eval-args evalua un argumento en un ambiente|#
 (define (eval-args arg env)
   (cases arguments arg
+    #|Si es de tipo some-arguments simplemente evalua el comp-value en eval-comp-value|#
     (some-arguments (comp-value) (eval-comp-value comp-value env))
+    #|Si es de tipo arreglo el argumento, uso eval-comp-value para evaluar el comp-value (no sé que hacer con
+el comp-values porque ni siquiera sé que debería contener)|#
     (arr-arguments (comp-value comp-values)(eval-comp-value comp-value env))))
 
+#|Extrae un dato de una lista compuesta (lista1) a partir de unas posiciones almacenadas en una lista simple (lista2)|#
 (define (encontrar lista1 lista2)
   (cond
     [(number? lista1) lista1]
