@@ -246,6 +246,7 @@
                           (if (check-apply-env env arg) (pretty-display (apply-env env arg))
                           (pretty-display arg)))
                         (map (lambda(x) (eval-comp-value x env)) vals)))
+
     (if-exp (if-comp if-batch elsif-comps elsif-batchs else-batch) (if (eqv? "true" (eval-comp-value if-comp env))
                                                                        (eval-exp-batch if-batch env)
                                                                        (if (or (empty? elsif-comps) (empty? elsif-batchs))
@@ -253,13 +254,12 @@
                                                                                (void)
                                                                                (eval-exp-batch (car else-batch) env))
                                                                            (eval-expression (if-exp (car elsif-comps) (car elsif-batchs) (cdr elsif-comps) (cdr elsif-batchs) else-batch) env))))
+
     (unless-exp (comp-bool batch else-batch) (if (eqv? "false" (eval-comp-value comp-bool env))
                                                  (eval-exp-batch batch env)
                                                  (if (empty? else-batch)
                                                      (void)
                                                      (eval-exp-batch (car else-batch) env))))
-    ;---->Creo que empezaría así
-    ;(declare-exp (identifier identifiers) exps)
     ;while-exp
     ;until-exp
     ;for-exp
@@ -281,9 +281,10 @@
       ((is-comp-calls-empty calls env) (eval-comp-value comp-value env))
       (else "TODO-handle proc calls"))))
 
+
 (define (is-comp-calls-empty cls env)
   (cases calls cls
-    (some-calls (cls) (empty? cls))
+    (some-calls (cls) cls)
     (else "")))
 
 
@@ -342,10 +343,42 @@
 ;    2) binop-val(binop c-val) entonces se aplica una bin-op entre a-val y la evaluacion
 ;       de c-val (c-val es un comp-value)
 
+
+#|   ;;Calls
+     ;; 0 o muchas llamadas
+     (calls ((arbno call)) some-calls)
+
+     ;;Call
+     (call (arguments) arguments-call)
+
+     ;;Argumentos
+     ;; llamar una función puede tener 0 argumentos o muchos
+     (arguments ("(" (separated-list comp-value ",") ")") some-arguments)
+     ;; almenos 1 argumento para llamar acceder a un elemento en un arreglo
+     ;; máximo 2, ejemplo: a=[1,2,3]; a[1] #output 2; a[1,2] #output [2,3];
+     ;;                    a[1,2,3] #output Error
+     (arguments ("[" comp-value (arbno "," comp-value) "]") arr-arguments)|#
 (define (eval-val-compl a-val a-val-compl env)
   (cases val-compl a-val-compl
-    (val-call (calls) a-val) ;---->No sé qué hacer aquí
+    (val-call (calls) (encontrar
+                       a-val
+                       (map (lambda (x) (eval-call x env))(is-comp-calls-empty calls env)))) ;---->No sé qué hacer aquí
     (binop-val (bin-op comp-value) (apply-op bin-op (reverse(list (eval-comp-value comp-value env) a-val))))))
+
+(define (eval-call cl env)
+  (cases call cl
+    (arguments-call (arguments) (eval-args arguments env))
+    (else "")))
+
+(define (eval-args arg env)
+  (cases arguments arg
+    (some-arguments (comp-value) (eval-comp-value comp-value env))
+    (arr-arguments (comp-value comp-values)(eval-comp-value comp-value env))))
+
+(define (encontrar lista1 lista2)
+  (cond
+    [(number? lista1) lista1]
+    [else (encontrar (list-ref lista1 (car lista2)) (cdr lista2))]))
 
 ; eval-simple-value s-val env (cases simple-value s-val (id-val ...) (num-val ...) (true-val ...))
 ;   evalúa un valor simple, comprende los casos desde id-val hasta arr-val
