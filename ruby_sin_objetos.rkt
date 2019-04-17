@@ -245,11 +245,21 @@
               (for-each (lambda (arg)
                           (if (check-apply-env env arg) (pretty-display (apply-env env arg))
                           (pretty-display arg)))
-                        (map (lambda(x) (eval-comp-value x env)) vals)))        
+                        (map (lambda(x) (eval-comp-value x env)) vals)))
+    (if-exp (if-comp if-batch elsif-comps elsif-batchs else-batch) (if (eqv? "true" (eval-comp-value if-comp env))
+                                                                       (eval-exp-batch if-batch env)
+                                                                       (if (or (empty? elsif-comps) (empty? elsif-batchs))
+                                                                           (if (empty? else-batch)
+                                                                               (void)
+                                                                               (eval-exp-batch (car else-batch) env))
+                                                                           (eval-expression (if-exp (car elsif-comps) (car elsif-batchs) (cdr elsif-comps) (cdr elsif-batchs) else-batch) env))))
+    (unless-exp (comp-bool batch else-batch) (if (eqv? "false" (eval-comp-value comp-bool env))
+                                                 (eval-exp-batch batch env)
+                                                 (if (empty? else-batch)
+                                                     (void)
+                                                     (eval-exp-batch (car else-batch) env))))
     ;---->Creo que empezaría así
     ;(declare-exp (identifier identifiers) exps)
-    ;if-exp
-    ;unless-exp
     ;while-exp
     ;until-exp
     ;for-exp
