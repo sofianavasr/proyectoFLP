@@ -202,13 +202,9 @@
   (lambda (proc args env)
     (cases procval proc
       (closure (ids body env)
-               ; |Evaluar el cuerpo de una función
-;;quitar '
-               '(eval-exp-batch body (extend-env ids args env))
-               )
-      )
-    )
-  )
+               (display body)))))
+               ;(eval-exp-batch body (extend-env ids args env))))))
+  
 ;*******************************************************************************************
 
 (define (eval-program pgm)
@@ -258,6 +254,9 @@
                                                  (if (empty? else-batch)
                                                      (void)
                                                      (eval-exp-batch (car else-batch) env))))
+    (function-exp (name ids batch) (a-recursive-env name ids batch env))
+    
+    
     ;---->Creo que empezaría así
     ;(declare-exp (identifier identifiers) exps)
     ;while-exp
@@ -265,6 +264,7 @@
     ;for-exp    
     ;return-exp
     (else "TO DO")))
+
 
 
 (define (asignar exps ids args env)
@@ -278,12 +278,24 @@
   (lambda (comp-value calls env)
     (cond
       ((is-comp-calls-empty calls env) (eval-comp-value comp-value env))
-      (else "TODO-handle proc calls"))))
+      (else (let ((proc (apply-env env (eval-comp-value comp-value env))))
+              (if (procval? proc)
+                  (apply-procedure proc (eval-calls calls env))
+                  (eopl:error 'eval-expression
+                                 "Attempt to apply non-procedure ~s" proc)))))))
+
+(define (eval-calls cls env)
+  (cases calls cls
+    (some-calls (calls) (eval-call calls env))))
+
+(define (eval-call cl env)
+  (cases call cl
+    (arguments-call (argument) (map (lambda (x) (eval-comp-value x env)) argument))))                        
 
 (define (is-comp-calls-empty cls env)
   (cases calls cls
     (some-calls (cls) (empty? cls))
-    (else "")))
+    (else (display "not a compl-call"))))
 
 
 (define (apply-complement s-val compl env)
