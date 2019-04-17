@@ -246,11 +246,20 @@
                           (if (check-apply-env env arg) (pretty-display (apply-env env arg))
                           (pretty-display arg)))
                         (map (lambda(x) (eval-comp-value x env)) vals)))
-    (function-exp (name ids batch) (extend-env (list name) (list (closure ids batch env)) env))
+    (if-exp (if-comp if-batch elsif-comps elsif-batchs else-batch) (if (eqv? "true" (eval-comp-value if-comp env))
+                                                                       (eval-exp-batch if-batch env)
+                                                                       (if (or (empty? elsif-comps) (empty? elsif-batchs))
+                                                                           (if (empty? else-batch)
+                                                                               (void)
+                                                                               (eval-exp-batch (car else-batch) env))
+                                                                           (eval-expression (if-exp (car elsif-comps) (car elsif-batchs) (cdr elsif-comps) (cdr elsif-batchs) else-batch) env))))
+    (unless-exp (comp-bool batch else-batch) (if (eqv? "false" (eval-comp-value comp-bool env))
+                                                 (eval-exp-batch batch env)
+                                                 (if (empty? else-batch)
+                                                     (void)
+                                                     (eval-exp-batch (car else-batch) env))))
     ;---->Creo que empezaría así
     ;(declare-exp (identifier identifiers) exps)
-    ;if-exp
-    ;unless-exp
     ;while-exp
     ;until-exp
     ;for-exp    
@@ -369,7 +378,7 @@
      (or-op () (if (or (eval-bool (car args)) (eval-bool (cadr args))) "true" "false"))
      (in-range () (rango (car args) (cadr args) 'in))
      (ex-range () (rango (car args) (cadr args) 'ex))
-     (st-range () "#<void>")));---->No sé qué debería retornar esto
+     (st-range () (steps (car args) (cadr args)))))
 
 (define eval-bool
   (lambda (val)
@@ -383,31 +392,48 @@
      (div-eq  ()   (/(car args) (cadr args)))
      (pow-eq  ()   (potencia(car args) (cadr args)))))
 
-
-
-
-#|FUNCION AUXILIAR PARA EX-RANGE Y ST-RANGE|#
+#|Función que dependiendo de el simbolo, realiza una lista excluyente o incluyente en un rango origen-destino|#
 (define (rango origen destino sym)
   (cond
+    #|Me aseguro que origen y destino sean números para no cometer errores de operación|#
     [(not(or(number? origen) (number? destino))) "Error"]
-    [(equal? sym 'in) (inclu origen destino 0)]
-    [(equal? sym 'ex) (exclu origen destino 0)]))
+    [(equal? sym 'in) (inclu origen destino)]
+    [(equal? sym 'ex) (exclu origen destino)]
+    #|Si no se digita el sym permitido, debo mostrar error|#
+    [else "Error"]))
 
-#|La función inclu crea una lista desde origen hasta destino que va de uno en uno|#
-(define (inclu origen destino acc)
+#|La función inclu realiza una lista que va desde origen hasta destino siendo el punto de parada cuando origen
+sea igual a destino|#
+(define (inclu origen destino)
   (cond
-   [(or (not (number? origen)) (not (number? destino))) "Error"]
-   [(= acc destino) empty]
-   [(= destino 1) (list origen)]
-   [else (append (list origen) (inclu (+ origen 1) destino (+ acc 1)))]))
+    [(= origen destino) (list origen)]
+    [(< origen destino) (append (list origen) (inclu (+ origen 1) destino))]
+    [(> origen destino) (reverse(inclu destino origen))]))
 
-#|La función inclu crea una lista desde origen hasta destino menos uno, que va de uno en uno|#
-(define (exclu origen destino acc)
+#|La función exclu realiza una lista que va desde origen hasta destino siendo el punto de parada cuando origen
+sea igual a destino pero con la diferencia que el punto de para devuelve vacio.|#
+(define (exclu origen destino)
   (cond
-   [(or (not (number? origen)) (not (number? destino))) "Error"]
-   [(= acc (- destino 1)) empty]
-   [(= destino 1) (list origen)]
-   [else (append (list origen) (exclu (+ origen 1) destino (+ acc 1)))]))
+    [(= origen destino) empty]
+    [(< origen destino) (append (list origen) (exclu(+ origen 1) destino))]
+    [(> origen destino) (append (list origen) (exclu(- origen 1) destino))]))
+
+#|Pasos recibe una lista, un comparador y un paso, la idea es que se genere una nueva lista que contenga los datos
+de la lista que fue pasada pero filtrada por paso, o sea, que la misma vaya de paso a paso.
+
+El ac es realmente la misma lista, sólo que esta no se verá afectada por la recursión, la idea es que paso en algún
+momento será igual a un dato de la lista y por tanto si deseo hacer el paso a paso correcto debo verificar que la manera
+en que deseo ir, debe estar contenido dentro de la lista que deseo filtrar.|#
+(define (pasos lista ac paso)
+  (cond
+    [(equal? '() lista)'()]
+    [(not(list? (member paso ac))) "Error"]
+    [(= (+ paso (car lista)) (last lista)) (list (+ paso (car lista)))]
+    [else (append (list (car lista)) (list (+ paso (car lista)))
+                   (pasos (cddr lista) ac paso))]))
+
+(define(steps lista paso)
+  (pasos lista lista paso))
 
 #|La función potencia elevan una base a la n potencia|#
 (define (potencia base n)
