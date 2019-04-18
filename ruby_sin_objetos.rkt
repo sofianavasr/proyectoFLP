@@ -273,7 +273,10 @@
                                            (eval-expression (until-exp comp-bool batch) env)))
                                      (void)))
 
-    ;for-exp
+    (for-exp (id comp-value exp-batch)
+             (for-each
+              (lambda (x)(eval-exp-batch exp-batch (extend-env (list id) (list x) env)))
+              (eval-comp-value comp-value env)))
     ;function-exp
     (return-exp (comp-value) (eval-comp-value comp-value env))
     (else "TO DO")))
