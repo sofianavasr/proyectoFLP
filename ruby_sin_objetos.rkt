@@ -561,18 +561,24 @@ sea igual a destino pero con la diferencia que el punto de para devuelve vacio.|
     [(< origen destino) (append (list origen) (exclu(+ origen 1) destino))]
     [(> origen destino) (append (list origen) (exclu(- origen 1) destino))]))
 
+#|Para explicar pasos, tendremos de ejemplo lo siguiente:
+lista       = '(1 2 3 4 5)
+paso        = 2
+lis-compare = lista|#
 (define (pasos lista paso lis-compare)
   (cond
-    [(empty? lista) '()]
-    [(or(and (< (car lis-compare) (last lis-compare))
-             (> 0 paso))(and (> (car lis-compare) (last lis-compare))
-                             (< 0 paso)))(eopl:error 'Step "bad step")]
-    [else (append (list(car lista))
-                  (pasos (if (positive? paso)
-                             (if(> paso (length lista)) '() (list-tail lista paso))
-                             (if(> (* -1 paso) (length lista)) '() (list-tail lista (* -1 paso))))
-                         paso
-                         lis-compare))]))
+    [(empty? lista) '()];<----Si la lista está vacía, devolver vacío (Dado a que la función retorna una lista).
+    
+    [(or(and (< (car lis-compare) (last lis-compare))                   ;|  Verificar que sea posible hacer paso con la
+             (> 0 paso))(and (> (car lis-compare) (last lis-compare))   ;|->lista dada. Dado a que la lista se verá
+                             (< 0 paso)))(eopl:error 'Step "bad step")] ;|  afectada por recursión usamos lis-compare
+    
+    [else (append (list(car lista)) ;->Concatenar el primero de la lista (1)...
+                  (pasos (if (positive? paso)                                              ;|...con el llamado recursivo
+                             (if(> paso (length lista)) '() (list-tail lista paso))        ;|->pero ahora lista será
+                      (if(> (* -1 paso) (length lista)) '() (list-tail lista (* -1 paso))));|'(3 4 5) gracias a list-tail
+                         paso                                                              ;| paso será el mismo
+                         lis-compare))]))                                                  ;|y lis-compare será la misma.
 
 (define (steps lista paso)
   (pasos lista paso lista))
