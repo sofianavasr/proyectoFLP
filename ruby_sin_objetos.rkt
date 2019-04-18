@@ -274,12 +274,13 @@
                                      (void)))
 
     (for-exp (id comp-value exp-batch)
-             (for-each
-              (lambda (x)(eval-exp-batch exp-batch (extend-env (list id) (list x) env)))
-              (eval-comp-value comp-value env)))
+              (for-each (lambda (x)
+                          (eval-exp-batch exp-batch (extend-env (list id) (list x) env)))
+                          (eval-comp-value comp-value env)))
     ;function-exp
     (return-exp (comp-value) (eval-comp-value comp-value env))
     (else "TO DO")))
+
 
 
 (define (asignar exps ids args env)
@@ -309,7 +310,8 @@
             (let ((id (apply-env-ref env (eval-simple-value s-val env))) (val (eval-complement-ass comp-value calls env)))
               (begin
                 (setref! id val)
-                val)))                     
+                ;val<---Ya no, de esta manera si hago declare a; a = 3; end, eso no devuelve nada
+                )))                     
     
 ;-----------------------------------------------------------------------------------------------------------------
 #|Lo que hacemos aquí es:
@@ -325,7 +327,9 @@
                     arg)))
 ;-----------------------------------------------------------------------------------------------------------------
     (comp-calls (calls)
-                (apply-env env(eval-simple-value s-val env)))));--->No sé para qué es calls
+                ;(apply-env env(eval-simple-value s-val env))
+                (eopl:error 'eval-un-op "No"))));--->La idea es que no se pueda hacer un llamado a secas
+                          ;     ("a;") si no que sea necesario el return
 ;----------------------------------------------------------------------------------------------------------------------
 
 (define (eval-comp-value c-value env)
@@ -388,7 +392,6 @@ el comp-values porque ni siquiera sé que debería contener)|#
                                                   (map (lambda (x)(eval-comp-value x env))
                                                        comp-values)
                                                   ))))
-
 #|Encontrar:
   Debo partir de la siguiente premisa para entender lo que debo hacer:
   Hay dos posibilidades cuando tratamos de obtener un valor de un arreglo.
@@ -514,9 +517,9 @@ lo necesario a través de las diferentes funciones auxiliares|#
      (not-equal () (if (not(equal? (car args) (cadr args))) "true" "false"))
      (and-op () (if (and (eval-bool (car args)) (eval-bool (cadr args))) "true" "false"))
      (or-op () (if (or (eval-bool (car args)) (eval-bool (cadr args))) "true" "false"))
-     (in-range () (eval-range(inclusive (car args) (cadr args) 1)))
-     (ex-range () (eval-range(exclusive (car args) (cadr args) 1)))
-     (st-range () (iota-range (car(car args)) (last (car args)) (cadr args)))))
+     (in-range () (rango (car args) (cadr args) 'in))
+     (ex-range () (rango (car args) (cadr args) 'ex))
+     (st-range () (steps (car args) (cadr args)))))
 
 (define eval-bool
   (lambda (val)
@@ -530,7 +533,45 @@ lo necesario a través de las diferentes funciones auxiliares|#
      (div-eq  ()   (/(car args) (cadr args)))
      (pow-eq  ()   (potencia(car args) (cadr args)))))
 
+#|Función que dependiendo de el simbolo, realiza una lista excluyente o incluyente en un rango origen-destino|#
+(define (rango origen destino sym)
+  (cond
+    #|Me aseguro que origen y destino sean números para no cometer errores de operación|#
+    [(not(or(number? origen) (number? destino))) "Error"]
+    [(equal? sym 'in) (inclu origen destino)]
+    [(equal? sym 'ex) (exclu origen destino)]
+    #|Si no se digita el sym permitido, debo mostrar error|#
+    [else "Error"]))
 
+#|La función inclu realiza una lista que va desde origen hasta destino siendo el punto de parada cuando origen
+sea igual a destino|#
+(define (inclu origen destino)
+  (cond
+    [(= origen destino) (list origen)]
+    [(< origen destino) (append (list origen) (inclu (+ origen 1) destino))]
+    [(> origen destino) (reverse(inclu destino origen))]))
+
+#|La función exclu realiza una lista que va desde origen hasta destino siendo el punto de parada cuando origen
+sea igual a destino pero con la diferencia que el punto de para devuelve vacio.|#
+(define (exclu origen destino)
+  (cond
+    [(= origen destino) empty]
+    [(< origen destino) (append (list origen) (exclu(+ origen 1) destino))]
+    [(> origen destino) (append (list origen) (exclu(- origen 1) destino))]))
+
+(define (pasos lista paso lis-compare)
+  (cond
+    [(empty? lista) '()]
+    [(andmap false? (map (lambda (dato) (= dato paso)) lis-compare)) "Error"]
+    [else (append (list(car lista))
+                  (pasos (if (positive? paso)
+                             (if(> paso (length lista)) '() (list-tail lista paso))
+                             (if(> (* -1 paso) (length lista)) '() (list-tail lista (* -1 paso))))
+                         paso
+                         lis-compare))]))
+
+(define (steps lista paso)
+  (pasos lista paso lista))
 #|La función potencia elevan una base a la n potencia|#
 (define (potencia base n)
   (cond
