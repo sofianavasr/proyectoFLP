@@ -562,7 +562,9 @@ sea igual a destino pero con la diferencia que el punto de para devuelve vacio.|
 (define (pasos lista paso lis-compare)
   (cond
     [(empty? lista) '()]
-    [(andmap false? (map (lambda (dato) (= dato paso)) lis-compare)) "Error"]
+    [(or(and (< (car lis-compare) (last lis-compare))
+             (> 0 paso))(and (> (car lis-compare) (last lis-compare))
+                             (< 0 paso)))(eopl:error 'Step "bad step")]
     [else (append (list(car lista))
                   (pasos (if (positive? paso)
                              (if(> paso (length lista)) '() (list-tail lista paso))
