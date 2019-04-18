@@ -275,7 +275,7 @@
 
     ;for-exp
     ;function-exp
-    ;return-exp
+    (return-exp (comp-value) (eval-comp-value comp-value env))
     (else "TO DO")))
 
 
@@ -553,22 +553,25 @@ sea igual a destino pero con la diferencia que el punto de para devuelve vacio.|
     [(< origen destino) (append (list origen) (exclu(+ origen 1) destino))]
     [(> origen destino) (append (list origen) (exclu(- origen 1) destino))]))
 
-#|Pasos recibe una lista, un comparador y un paso, la idea es que se genere una nueva lista que contenga los datos
+#|Pasos recibe una lista, un paso y un comparado, la idea es que se genere una nueva lista que contenga los datos
 de la lista que fue pasada pero filtrada por paso, o sea, que la misma vaya de paso a paso.
 
-El ac es realmente la misma lista, sólo que esta no se verá afectada por la recursión, la idea es que paso en algún
+El lis-compare es realmente la misma lista, sólo que esta no se verá afectada por la recursión, la idea es que paso en algún
 momento será igual a un dato de la lista y por tanto si deseo hacer el paso a paso correcto debo verificar que la manera
 en que deseo ir, debe estar contenido dentro de la lista que deseo filtrar.|#
-(define (pasos lista ac paso)
+(define (pasos lista paso lis-compare)
   (cond
-    [(equal? '() lista)'()]
-    [(not(list? (member paso ac))) "Error"]
-    [(= (+ paso (car lista)) (last lista)) (list (+ paso (car lista)))]
-    [else (append (list (car lista)) (list (+ paso (car lista)))
-                   (pasos (cddr lista) ac paso))]))
+    [(empty? lista) '()]
+    [(andmap false? (map (lambda (dato) (= dato paso)) lis-compare)) "Error"]
+    [else (append (list(car lista))
+                  (pasos (if (positive? paso)
+                             (if(> paso (length lista)) '() (list-tail lista paso))
+                             (if(> (* -1 paso) (length lista)) '() (list-tail lista (* -1 paso))))
+                         paso
+                         lis-compare))]))
 
-(define(steps lista paso)
-  (pasos lista lista paso))
+(define (steps lista paso)
+  (pasos lista paso lista))
 
 #|La función potencia elevan una base a la n potencia|#
 (define (potencia base n)
