@@ -547,6 +547,7 @@ lo necesario a través de las diferentes funciones auxiliares|#
 sea igual a destino|#
 (define (inclu origen destino)
   (cond
+    [(or (list? origen) (list? destino))"Error"]
     [(= origen destino) (list origen)]
     [(< origen destino) (append (list origen) (inclu (+ origen 1) destino))]
     [(> origen destino) (reverse(inclu destino origen))]))
@@ -555,6 +556,7 @@ sea igual a destino|#
 sea igual a destino pero con la diferencia que el punto de para devuelve vacio.|#
 (define (exclu origen destino)
   (cond
+    [(or (list? origen) (list? destino))"Error"]
     [(= origen destino) empty]
     [(< origen destino) (append (list origen) (exclu(+ origen 1) destino))]
     [(> origen destino) (append (list origen) (exclu(- origen 1) destino))]))
