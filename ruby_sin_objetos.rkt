@@ -406,7 +406,7 @@ que no contiene ningún otro arreglo. Y será de longitud dos, cuando éste pose
 (define lista3 (list (list 0 3)));<-------rango   (longitud 2)=arreglo[0,3]
 |#
 
-#||#
+#|Función encontrar, encuentra un dato dentro de un arreglo.|#
 (define (encontrar lis-vals lis-pos)
   (cond
 #|Sería erroneo tratar de hacer algo así: arreglo[0][0] sabiendo que el arreglo es [1,2,3,4]. Así que
@@ -514,9 +514,9 @@ lo necesario a través de las diferentes funciones auxiliares|#
      (not-equal () (if (not(equal? (car args) (cadr args))) "true" "false"))
      (and-op () (if (and (eval-bool (car args)) (eval-bool (cadr args))) "true" "false"))
      (or-op () (if (or (eval-bool (car args)) (eval-bool (cadr args))) "true" "false"))
-     (in-range () (rango (car args) (cadr args) 'in))
-     (ex-range () (rango (car args) (cadr args) 'ex))
-     (st-range () (steps (car args) (cadr args)))))
+     (in-range () (eval-range(inclusive (car args) (cadr args) 1)))
+     (ex-range () (eval-range(exclusive (car args) (cadr args) 1)))
+     (st-range () (iota-range (car(car args)) (last (car args)) (cadr args)))))
 
 (define eval-bool
   (lambda (val)
@@ -530,51 +530,6 @@ lo necesario a través de las diferentes funciones auxiliares|#
      (div-eq  ()   (/(car args) (cadr args)))
      (pow-eq  ()   (potencia(car args) (cadr args)))))
 
-#|Función que dependiendo de el simbolo, realiza una lista excluyente o incluyente en un rango origen-destino|#
-(define (rango origen destino sym)
-  (cond
-    #|Me aseguro que origen y destino sean números para no cometer errores de operación|#
-    [(not(or(number? origen) (number? destino))) "Error"]
-    [(equal? sym 'in) (inclu origen destino)]
-    [(equal? sym 'ex) (exclu origen destino)]
-    #|Si no se digita el sym permitido, debo mostrar error|#
-    [else "Error"]))
-
-#|La función inclu realiza una lista que va desde origen hasta destino siendo el punto de parada cuando origen
-sea igual a destino|#
-(define (inclu origen destino)
-  (cond
-    [(= origen destino) (list origen)]
-    [(< origen destino) (append (list origen) (inclu (+ origen 1) destino))]
-    [(> origen destino) (reverse(inclu destino origen))]))
-
-#|La función exclu realiza una lista que va desde origen hasta destino siendo el punto de parada cuando origen
-sea igual a destino pero con la diferencia que el punto de para devuelve vacio.|#
-(define (exclu origen destino)
-  (cond
-    [(= origen destino) empty]
-    [(< origen destino) (append (list origen) (exclu(+ origen 1) destino))]
-    [(> origen destino) (append (list origen) (exclu(- origen 1) destino))]))
-
-#|Pasos recibe una lista, un paso y un comparado, la idea es que se genere una nueva lista que contenga los datos
-de la lista que fue pasada pero filtrada por paso, o sea, que la misma vaya de paso a paso.
-
-El lis-compare es realmente la misma lista, sólo que esta no se verá afectada por la recursión, la idea es que paso en algún
-momento será igual a un dato de la lista y por tanto si deseo hacer el paso a paso correcto debo verificar que la manera
-en que deseo ir, debe estar contenido dentro de la lista que deseo filtrar.|#
-(define (pasos lista paso lis-compare)
-  (cond
-    [(empty? lista) '()]
-    [(andmap false? (map (lambda (dato) (= dato paso)) lis-compare)) "Error"]
-    [else (append (list(car lista))
-                  (pasos (if (positive? paso)
-                             (if(> paso (length lista)) '() (list-tail lista paso))
-                             (if(> (* -1 paso) (length lista)) '() (list-tail lista (* -1 paso))))
-                         paso
-                         lis-compare))]))
-
-(define (steps lista paso)
-  (pasos lista paso lista))
 
 #|La función potencia elevan una base a la n potencia|#
 (define (potencia base n)
