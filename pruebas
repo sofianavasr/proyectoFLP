@@ -89,7 +89,7 @@ Resultado: 1
            =>nil
 
 ruby declare a; a = [1,2,3,4,5,6,7]; puts (a[0,4]); puts (a[-1,-4]); end
-Resultado: (1 2 3 4)
+Resultado: (1 2 3 4 5)
            Error
 ruby declare a; a = [[1,[[1,[100,[101,102,[0]]],3,4],2,3,3],3,4],2,3,4,5,6,7,8,9,10]; puts(a[0][1][0][1][1][2][0]); end
 Resultado: (0)
