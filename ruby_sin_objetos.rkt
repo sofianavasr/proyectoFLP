@@ -368,11 +368,10 @@
   (cases val-compl a-val-compl
     (val-call (calls) (encontrar ;<--- encuentra un dato de un arreglo con otra lista que suponemos es de posiciones
                        a-val ;<--- lista del arreglo
-                       (map (lambda (x) (eval-call x env))(is-comp-calls-empty calls env));<---lista de posiciones
-                       ))
+                       (map (lambda (x) (eval-call x env))(is-comp-calls-empty calls env))));<---lista de posiciones
               
     
-    (binop-val (bin-op comp-value) (apply-op bin-op (reverse(list (eval-comp-value comp-value env) a-val))))))
+    (binop-val (bin-op comp-value) (apply-op bin-op (append (list a-val)(list(eval-comp-value comp-value env)))))))
 
 #|eval-call recibe una call en vez de una lista calls, un call puede ser arguments-call|#
 (define (eval-call cl env)
@@ -389,107 +388,9 @@
     #|Si es de tipo arreglo el argumento, uso eval-comp-value para evaluar el comp-value (no sé que hacer con
 el comp-values porque ni siquiera sé que debería contener)|#
     (arr-arguments (comp-value comp-values) (append(list(eval-comp-value comp-value env))
-                                                  (map (lambda (x)(eval-comp-value x env))
+                                                   (map (lambda (x)(eval-comp-value x env))
                                                        comp-values)
                                                   ))))
-#|Encontrar:
-  Debo partir de la siguiente premisa para entender lo que debo hacer:
-  Hay dos posibilidades cuando tratamos de obtener un valor de un arreglo.
-
-a)El rango siempre será una lista de longitud 2. Dado a que su naturaleza es tener un inicio y un final.
-b)El arreglo es una lista de máxima  longitud 2. Será de longitud uno, cuand el arreglo que manejamos es un arreglo
-que no contiene ningún otro arreglo. Y será de longitud dos, cuando éste posea arreglos dentro de sí.
-
-;-------------------POSIBILIDADES 1-----------------
-(define lista1 (list (list (list 1 2) 3) 4));<----arreglo(longitud 2)=[[[1,2],3],4]
-(define lista4 (list (list 0) (list 0 1)))  ;<----rango  (longitud 2)=arreglo[0][0,1]
-
-;-------------------POSIBILIDADES 2-----------------
-(define lista2 (list(list 1 2 3 4)));<----arreglo (longitud 1)=[1,2,3,4]
-(define lista3 (list (list 0 3)));<-------rango   (longitud 2)=arreglo[0,3]
-|#
-
-#|Función encontrar, encuentra un dato dentro de un arreglo.|#
-(define (encontrar lis-vals lis-pos)
-  (cond
-#|Sería erroneo tratar de hacer algo así: arreglo[0][0] sabiendo que el arreglo es [1,2,3,4]. Así que
-para verificar que no se cometa ese error; miramos con andmap que el arreglo sea uno simple (su contenido sea
-sólo números) y que la lista de posiciones no sea una lista de listas (lo que equivale a arreglo[in][end])|#
-    [(and (andmap number? lis-vals) (andmap list? lis-pos)) "Error 1"]
-
-#|Si ambas no son de longitud uno, lo que equivale a un arreglo de posibles arreglos y una posición compuesta
-(arreglo[in][end]), entonces usamos la función general con ambas listas|#
-    [(not (and (= 1 (length lis-vals)) (= 1(length lis-pos)))) (comp-range-array lis-vals lis-pos)]
-    
-    #|Si la condición anterior se cumple, estaremos hablando de que ambas son listas simples o sencillas
-(un arreglo de sólo números un llamado a posición que va de in a end sin más). Por esto, llamaremos a
-simple-range-array que recibe un inicio, un final, una lista y un ac que será sólo con propósitos comparativos.
-
-Por lo tanto, invocaremos tal función de la siguiente manera:
-inicio = primer valor de la lista lis-pos (array[0][2]->'('(0 2)))->0)
-final  = segundo valor de la lista lis-pos(array[0][2]->'('(0 2)))->2)
-lista  = (car lis-vals)-->(car(list lis-vals))
-ac     = (car lis-vals)-->(car(list lis-vals))|#
-    [else (simple-range-array (caar lis-pos) (if (= 1 (length(car lis-pos)))
-                                          (caar lis-pos) (cadar lis-pos)) (car lis-vals) (car lis-vals))]))
-
-#|Arreglo simple, posición simple|#
-(define (simple-range-array in end lis ac)
-  (cond
-    #|Tenemos que verificar que in no sea negativo porque tal posición no existe y además debemos verificar que
-end no sea mayor que la máxima posición de la lista (dado a que la lista la estaremos modificando por motivos de
-recursión, usaremos ac)|#
-    [(or (< in 0)  (> end (- (length ac) 1))) "Error"]
-    #|Si la lista está vacía devolvemos vación ya que el propósito de esta función es retornar una lista|#
-    [(empty? lis) '()]
-    #|Nuestro punto de parada es cuando nuestro inicio llegue a su final, entonces devolveremos una lista
-que contenga el dato en esa posición de la lista ingresada.|#
-    [(= in end) (list (list-ref lis in))]
-    #|Mientras que el punto de parada no se cumpla, concatenaremos el dato que se encuentra en la posición in
-con la recurisón de simple-range-array pero ahora in se aumentará en uno y su end,lis y ac serán los mismos.|#
-    [else (append (list (list-ref lis in)) (simple-range-array (+ in 1) end lis ac))]))
-
-
-#|Cuando no se trate de un arreglo simple y por lo tanto de una llamado a posicionamiento simple, acudiremos a
-la función encon que recibe dos listas|#
-(define (encon lista1 lista2)
-  (cond
-#|Primer punto de parada, cuando la lista a la cual le estamos buscando un número, termine siendo el mismo entonces
-devolverlo.|#
-    [(number? lista1) lista1]
-#|El otro punto de parada es cuando nuestra lista1 que no es un arreglo simple, se convierta en esta, así la devolveremos
-para evaluarla con simple-range-array|#
-    [(andmap number? lista1) lista1]
-#|Mientras ningun punto de parada se cumpla seguiremos haciendo recursión con econ
-pero la lista donde buscaremos el dato será el producto de hacer list-ref con la lista1 intacta y como posición tendremos
-el primer dato, del primer dato de lista2 -arreglo[0][1]-->'('(0)'(1))--> 0-. Como lista2 pasaremos el resto de esta.|#
-    [else (encon (list-ref lista1 (caar lista2)) (cdr lista2))]))
-
-#|Función bo me dice si una lista posee listas con longitud 1, lo que equivale a devolver una lista de longitud dos
-(ya que la lista es de posiciones y esta siempre será de longitud 2) que contiene dos booleanos|#
-(define (bo lista)
-  (map (lambda (x) (= 1 (length x)))lista))
-
-
-#|----------------------Funcion evalua arreglos compuestos-------------------------------------------------|#
-(define (comp-range-array lista1 lista2)
-  (cond
-#|Si bo devuelve una lista con dos datos de tipo #true entonces estaremos hablando de una lista de posiciones compuesta
- con llamado a dato en una sola posición. Entonces,haremos llamado a encon con ambas listas|#
-    [(and (equal? #t (car (bo lista2)))
-          (equal? #t (cadr (bo lista2)))) (encon lista1 lista2)]
-    
- #|Si no devuelve una lista de sólo true's quiere decir que tenemos un arreglo compuesto y llamado de posición compuesto
-que desea sacar una fragmento de un arreglo contenido sobre otro.
-Ej: array = [[1,2,3],4,5]; puts(array[0][0,2]);
-Por lo tanto llamaremos a la función principal encontrar para que se encargue de evaluar de nuevo todo y sacar
-lo necesario a través de las diferentes funciones auxiliares|#
-    
-    [else (encontrar (list(encon lista1 lista2)) (cdr lista2))]))
-
-; eval-simple-value s-val env (cases simple-value s-val (id-val ...) (num-val ...) (true-val ...))
-;   evalúa un valor simple, comprende los casos desde id-val hasta arr-val
-;   para el caso de id-val se debe hacer apply-env
 
 (define (eval-simple-value s-val env)
   (cases simple-value s-val
@@ -532,6 +433,94 @@ lo necesario a través de las diferentes funciones auxiliares|#
      (mult-eq ()   (*(car args) (cadr args)))
      (div-eq  ()   (/(car args) (cadr args)))
      (pow-eq  ()   (potencia(car args) (cadr args)))))
+
+#|Encontrar:
+  Debo partir de la siguiente premisa para entender lo que debo hacer:
+  Hay dos posibilidades cuando tratamos de obtener un valor de un arreglo.
+
+a)El rango siempre será una lista de longitud 2. Dado a que su naturaleza es tener un inicio y un final.
+
+;-------------------POSIBILIDADES 1-----------------
+(define lista1 (list (list (list 1 2) 3) 4));<----arreglo(longitud 2)=[[[1,2],3],4]
+(define lista4 (list (list 0) (list 0) (list 0)))  ;<----lista de rangos de longitud 1)= arreglo[0][0]
+;-------------------POSIBILIDADES 2-----------------
+(define lista2 (list(list 1 2 3 4)));<----arreglo (longitud 1)=[1,2,3,4]
+(define lista3 (list (list 0 3)));<-------rango   (longitud 2)= arreglo[0,3]
+|#
+#|Función encontrar, encuentra un dato dentro de un arreglo.|#
+(define (encontrar lis-vals lis-pos)
+  (cond
+#|Si alguna no es de longitud uno, lo que equivale a un arreglo de posibles arreglos y una posición compuesta
+(arreglo[in][end]), entonces usamos la función general con ambas listas|#
+    [(not (or (= 1 (length lis-vals)) (= 1(length lis-pos)))) (comp-range-array lis-vals lis-pos)]
+    
+    #|Si la condición anterior no se cumple, estaremos hablando de que ambas son listas simples o sencillas
+(un arreglo de sólo números un llamado a posición que va de in a end sin más). Por esto, llamaremos a
+simple-range-array que recibe un inicio, un final, una lista y un ac (ac será sólo con propósitos comparativos).
+Por lo tanto, invocaremos tal función de la siguiente manera:
+inicio = primer valor de la lista lis-pos (array[0,2]->'('(0 2)))->0)
+final  = segundo valor de la lista lis-pos(array[0,2]->'('(0 2)))->2)(Si estoy haciendo array[0] entonces end=in)
+lista  = (car lis-vals)-->(car(list lis-vals))
+ac     = (car lis-vals)-->(car(list lis-vals))|#
+    [else (simple-range-array (caar lis-pos) (if (= 1 (length(car lis-pos)))
+                                          (caar lis-pos) (cadar lis-pos)) lis-vals lis-vals)]))
+
+#|Arreglo simple, posición simple|#
+(define (simple-range-array in end lis ac)
+  (cond
+    #|Tenemos que verificar que in no sea negativo porque tal posición no existe y además debemos verificar que
+end no sea mayor que la máxima posición de la lista (dado a que la lista la estaremos modificando por motivos de
+recursión, usaremos ac)|#
+    [(or (< in 0)  (> end (- (length ac) 1))) "Error"]
+    #|Si la lista está vacía devolvemos vación ya que el propósito de esta función es retornar una lista|#
+    [(empty? lis) '()]
+    #|Nuestro punto de parada es cuando nuestro inicio llegue a su final, entonces devolveremos lo que contenga
+      el dato en esa posición de la lista ingresada. Si lo que devuelve es una lista, la entregamos tal como está
+      si lo que devuelve es un dato diferente a lista, devolvemos el dato dentro de una lista.|#
+    [(= in end)  (if (list? (list-ref lis in)) (list-ref lis in) (list (list-ref lis in)))]
+    #|Mientras que el punto de parada no se cumpla, concatenaremos el dato que se encuentra en la posición in
+      con la recurisón de simple-range-array pero ahora in se aumentará en uno y su end,lis y ac serán los mismos.|#
+    [else (append (list (list-ref lis in)) (simple-range-array (+ in 1) end lis ac))]))
+
+
+#|Cuando no se trate de un arreglo simple y por lo tanto de una llamado a posicionamiento simple, acudiremos a
+la función encon que recibe dos listas|#
+(define (encon lista1 lista2)
+  (cond
+#|Punto de parada: cuando la lista a la cual le estamos buscando un número, termine siendo el mismo entonces
+devolverlo.|#
+    [(number? lista1) lista1]
+#|Mientras ningun punto de parada se cumpla seguiremos haciendo llamado a encontrar (para que se encargue de decidir
+si hemos llegado a un punto donde las lista1 es simple (arreglo sencillo) o seguimos teniendo un arreglo compuesto).
+pero la lista donde buscaremos el dato será el producto de hacer list-ref con la lista1 intacta y como posición tendremos
+el primer dato, del primer dato de lista2 -arreglo[0][1]-->'('(0)'(1))--> 0-. Como lista2 pasaremos el resto de esta.|#
+    [else (encontrar (list-ref lista1 (caar lista2)) (cdr lista2))]))
+
+#|Función bool me regresa una lista de dos booleanos las cuales me servirán de indicador para saber si mi llamado
+es compuesto o no.|#
+(define (bool lista)
+  (map (lambda (x) (= 1 (length x)))lista))
+
+
+#|----------------------Funcion evalua arreglos compuestos-------------------------------------------------|#
+(define (comp-range-array lista1 lista2)
+  (cond
+#|Si bool devuelve una lista con dos datos de tipo #true entonces estaremos hablando de una lista de posiciones compuesta
+ con llamado a dato en una sola posición (Ej: array[0][0]). Entonces,haremos llamado a encon con ambas listas|#
+    [(and (equal? #t (car (bool lista2)))
+          (equal? #t (cadr (bool lista2)))) (encon lista1 lista2)]
+    
+ #|Si no devuelve una lista de sólo true's quiere decir que tenemos un arreglo compuesto y llamado de posición compuesto
+que desea sacar una fragmento de un arreglo contenido sobre otro.
+Ej: array = [[1,2,3],4,5]; puts(array[0][0,2]);
+Por lo tanto llamaremos a la función principal encontrar para que se encargue de evaluar de nuevo todo y sacar
+lo necesario a través de las diferentes funciones auxiliares|#
+    
+    [else (encontrar (encon lista1 lista2) (cdr lista2))]))
+
+; eval-simple-value s-val env (cases simple-value s-val (id-val ...) (num-val ...) (true-val ...))
+;   evalúa un valor simple, comprende los casos desde id-val hasta arr-val
+;   para el caso de id-val se debe hacer apply-env
 
 #|Función que dependiendo de el simbolo, realiza una lista excluyente o incluyente en un rango origen-destino|#
 (define (rango origen destino sym)
@@ -801,34 +790,6 @@ cadena más limpia|#
 
 ;*******************************************************************************************
 ;*******************************************************************************************
-;;;Rangos
-(define-datatype range range?
-  (inclusive (start number?) (end number?) (step number?))
-  (exclusive (start number?) (end number?) (step number?))
-  )
-
-(define (eval-range a-range)
-  (cases range a-range
-    (inclusive (start end step) (iota-range start end step))
-    (exclusive (start end step) (iota-range start (- end 1) step))
-    )
-  )
-
-;;Función que retorna una lista dado un inicio, un final, y un incremento 
-(define iota-range
-  (lambda (start end step)
-    (cond [(or
-            (and (< start end) (> 0 step))
-            (and (> start end) (< 0 step)))
-           (eopl:error 'Step "bad step")]
-          [else
-           (let loop ((next start))
-             (if (= 0 (abs (- next end)))
-                 (list next)
-                 (cons next (loop (+ next step)))))]
-          )
-    ))
-
 ; #Ejemplos:
 ; > (eval-range (inclusive 1 10 1))
 ; (1 2 3 4 5 6 7 8 9 10)
@@ -839,7 +800,6 @@ cadena más limpia|#
 ; > (eval-range (inclusive -1 10 -1))
 ; . . Step: bad step
 
-
-;*******************************************************************************************
-;*******************************************************************************************
 (interpretador)
+;*******************************************************************************************
+;*******************************************************************************************
