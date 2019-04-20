@@ -437,6 +437,10 @@
 (define (operacion lista sys)
   (cond
     [(equal? lista '()) "Error"]
+    [(and (number?(car lista))(list? (cadr lista)) (equal? sys 'suma))"Error"]
+    [(and (list? (car lista)) (number? (cadr lista)) (equal? sys 'suma))"Error"]
+    [(and (number?(car lista))(string? (cadr lista)) (equal? sys 'suma))"Error"]
+    [(and (string? (car lista)) (number? (cadr lista)) (equal? sys 'suma))"Error"]   
     #|Si mi lista de args son puras cadenas entonces sé que su suma equivale a concatenar ambos|#
     [(and (string? (car lista)) (string? (cadr lista)) (eq? sys 'suma))
 
@@ -460,14 +464,15 @@ ya se trate de una suma o una multiplicación, los puedo operar de manera común
              (if (eq? sys 'suma) (+ (car lista) (cadr lista))
                                  (* (car lista) (cadr lista)))]
     #|Si no cumple ninguna, entonces se trata de un arreglo y debo usar funciones auxiliares|#
-    [else (if (eq? sys 'suma)(operar (car lista) (cadr lista))
-             (duplicar (car lista) (cadr lista)))
-     ]))
+    [else (if (eq? sys 'suma)
+              (append (car lista) (cadr lista))             ;|CAMBIO
+              (duplicar (car lista) (cadr lista)))]))
 
 #|Duplica el contenido de una lista n veces|#
 (define (duplicar lista n)
   (cond
     [(eq? '() lista) '()]
+    [(or (list? n)(string? n)) "Error"]
     [(= n 0)'()]
     [else (append lista (duplicar lista (- n 1)))]))
 
