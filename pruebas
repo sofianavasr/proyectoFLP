@@ -1,0 +1,215 @@
+OPERACIONES BÁSICAS:
+ruby puts(2+2);           #->  4
+     puts(2 - 2);         #->  0
+     puts(2*2);           #->  4
+     puts(2/2);           #->  1
+     puts(2 % 2);         #->  0
+     puts(2 ** 2);        #->  4
+     puts(2>2);           #->  false
+     puts(2>=2);          #->  true
+     puts(4<=2);          #->  false 
+     puts(4==4);          #->  true
+     puts(4!=4);          #->  false
+     puts(true and true); #->  true
+     puts(true && false); #->  false
+     puts(true or false); #->  true
+     puts(false || false);#->  false
+     puts(not (2>5));     #->  true
+     puts(! true);        #->  false
+     puts(1..5);          #->  (1 2 3 4 5)
+     puts(1...5);         #->  (1 2 3 4)
+     puts((1..5) .. 6);   #->  Error
+     puts((1..5) step 2); #->  (1 3 5)
+     puts((-1..-5) step -2);#->(-1 -3 -5)
+     puts((1..-5) step 2);#->  Step: bad step
+     puts((1..5) step -1);#->  Step: bad step
+end
+
+ruby puts (1+(2+(3+4))); end
+Resultado: 10
+
+ruby puts ((1+2)+(3+4)); end
+Resultado: 10
+
+ruby puts ((1+(2+3))+4); end
+Resultado: 10
+
+ruby puts ("hola"+" mundo"); end
+Resultado: hola mundo
+
+ruby puts (["hola"]+["mundo"]); end
+Resultado: ("hola" "mundo")
+
+ruby puts ("hola"+2); end
+Resultado: Error
+
+ruby puts (2+"hola"); end
+Resultado: Error
+
+ruby puts ("hola"*2); end
+Resultado: holahola
+
+ruby declare a; a = 3; puts (a/" mundo"); end
+Resultado: String can’t be coerced into Integer
+
+ruby puts ([1,2]*2) end
+Resultado: (1 2 1 2)
+
+ruby declare a,b,c; a = 5; b = 6; c = 10; puts a,b,c; end
+Resultado: 5
+           6
+           10
+           =>nil
+
+ruby declare a,b,c; b = 6; c = 10; puts a,b,c; end
+Resultado: nil
+           6
+           10
+           =>nil
+ruby declare a,b,c; b = 6; c = 10; puts a,b,d; end
+Resultado: Error: undefined local variable or method d
+
+ruby puts d; declare d; end
+Resultado: Error: undefined local variable or method d
+
+ruby declare a; a = 5; puts a; a += 1; puts a; end
+Resultado: 5
+           6
+           =>nil
+
+ruby def print (val) puts val; end print("hola mundo"); end
+Resultado: hola mundo
+           =>nil
+
+ruby def add1(val) val += 1; return val; end add1(100); end
+Resultado: 101
+
+ruby declare a; a = [[1,2],3]; puts (a[0][0]); end
+Resultado: 1
+           =>nil
+
+ruby declare a; a = [1,2,3,4,5,6,7]; puts (a[0,4]); puts (a[-1,-4]); end
+Resultado: (1 2 3 4 5)
+           Error
+ruby declare a; a = [[1,[[1,[100,[101,102,[0]]],3,4],2,3,3],3,4],2,3,4,5,6,7,8,9,10]; puts(a[0][1][0][1][1][2][0]); end
+Resultado: (0)
+
+ruby def fact(n) if (n == 0) then return 1; else puts "el valor de n es ",n; return (n*(fact((n-1)))); end end puts "el factorial de 5 es",(fact(5)); end
+Resultado: el valor de n es
+           5
+           el valor de n es
+           4
+           el valor de n es
+           3
+           el valor de n es
+           2
+           el valor de n es
+           1
+           el factorial de 5 es
+           120
+           =>nil
+
+ruby def fibo(n) if (n<=2) then return 1; else declare left,right; left = (n-1); right = (n-2); return ((fibo(left))+(fibo(right))); end end puts (fibo(10)); end
+Resultado: 55
+           =>nil
+
+ruby def to_text(num) declare text; text = ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve"]; return (text[num]); end to_text(  5  ); end
+Resultado: "cinco"
+
+ruby def hola() return "mundo"; end end
+Resultado: hola
+
+ruby def hola() return "mundo"; end puts hola; end
+Resultado: #0=#(struct:closure ()
+           #(struct:a-batch #(struct:return-exp
+           #(struct:op-value #(struct:simple-val
+           #(struct:str-val "mundo")))) ())
+           #(struct:extended-env-record (hola)
+           #(#0#) #(struct:empty-env-record)))
+           =>nil
+
+ruby declare x; x = 3; if (x>5) then puts x; elsif (x<3) then puts "mundo"; else puts "hola"; else puts "otro else"; end end
+Resultado: #si x = 3
+           hola
+           =>nil
+           #si x = 2
+           mundo
+           =>nil
+           #si x = 6
+           6
+           =>nil
+
+ruby unless false then puts 4; end end
+Resultado: 4
+           =>nil
+
+ruby unless true then puts 4; else puts "hola mundo"; end end
+Resultado: hola mundo
+           =>nil
+
+ruby unless true then puts 4 else puts "hola mundo" else puts "otro else" end end
+Resultado: hola mundo
+           =>nil
+
+ruby declare x; x = 0; while (x<10) do puts x; x += 1; end end
+Resultado: 0
+           1
+           2
+           3
+           4
+           5
+           6
+           7
+           8
+           9
+           #<void>
+
+ruby declare x; x = 0; until (x>=10) do puts x; x += 1; end end
+Resultado: 0
+           1
+           2
+           3
+           4
+           5
+           6
+           7
+           8
+           9
+           #<void>
+
+ruby for x in (1..6) do puts x; end end
+Resultado: 1
+           2
+           3
+           4
+           5
+           6
+           =>nil
+
+ruby for x in (1...6) do puts x; end end
+Resultado: 1
+           2
+           3
+           4
+           5
+           =>nil
+
+ruby for x in ((1..10) step 2) do puts x; end end
+Resultado: 1
+           3
+           5
+           7
+           9
+           =>nil
+
+ruby for x in [1,2,3] do puts x; end end
+Resultado: 1
+           2
+           3
+           =>nil
+
+ruby declare a; a = [1,2,3]; for x in a do puts x; end end
+Resultado: 1
+           2
+           3
+           =>nil
