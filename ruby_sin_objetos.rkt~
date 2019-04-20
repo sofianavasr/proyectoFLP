@@ -320,8 +320,8 @@
               left-value-evaluated)
           (if (procval? left-value-evaluated)
               (apply-procedure left-value-evaluated (car args) env)
-              (let ((result (encontrar left-value-evaluated args)))
-                (if (and (eqv? (length result) 1))
+              (let ((result (encontrar left-value-evaluated args)))             ;AQUI VA LO DE ARREGLOS   
+                (if (and (eqv? (length result) 1) (not (list? (car result))))
                     (car result)
                     result)))))))
               

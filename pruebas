@@ -1,8 +1,8 @@
 OPERACIONES BÁSICAS:
-ruby puts(2+2);           #->  4
-     puts(2 - 2);         #->  0
-     puts(2*2);           #->  4
-     puts(2/2);           #->  1
+ruby puts(2+2); end       #->  4
+ruby puts(2 - 2);         #->  0
+ruby puts(2*2);           #->  4
+ruby puts(2/2);           #->  1
      puts(2 % 2);         #->  0
      puts(2 ** 2);        #->  4
      puts(2>2);           #->  false
