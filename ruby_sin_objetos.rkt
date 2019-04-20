@@ -243,7 +243,7 @@
 
     (for-exp (id comp-value exp-batch)
              (for-each (lambda (x)
-                         (eval-exp-batch exp-batch (extend-env (list id) (list x) env)))
+                         (eval-proc-batch exp-batch (extend-env (list id) (list x) env)))
                        (eval-comp-value comp-value env)))))
 
 ;evalua una expresion simple
