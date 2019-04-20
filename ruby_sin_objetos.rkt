@@ -1,6 +1,6 @@
 #lang racket
 (require eopl)
-(require racket/string); string-trim
+
 #|--------------------INTEGRANTES---------------------------
  Diana Sofía Navas   1629571
  Luis David Restrepo 1427086
@@ -20,34 +20,22 @@
 )
 
 (define grammar-spec
-  '( ;;Representa un programa de ruby     
-     (ruby-program ("ruby" exp-batch "end") a-program)
-     ;; Parte 2: Ruby con objetos
-     ;; cambiar a: (ruby-program ("ruby" (arbno class-decl) exp-batch "end") a-program)
-     
-     ;;Exp-batch: Representa una cerradura de expresiones
+  '( (ruby-program ("ruby" exp-batch "end") a-program)
      (exp-batch (expression (arbno expression)) a-batch)
 
      ;;Expresión:
      (expression (simple-exp) a-simple-exp)
-     ;Declare-exp: al menos uno o más identificadores (deben inicializarse en 'nil)
      (expression ("declare" identifier (arbno "," identifier) ";") declare-exp)
-     ;Puts-exp: al menos un valor compuesto para imprimir
      (expression ("puts" (separated-list comp-value ",") ";") puts-exp)
-
      (expression ("if" comp-value (arbno "then") exp-batch
                        (arbno "elsif" comp-value (arbno "then") exp-batch)
                        (arbno "else" exp-batch) "end") if-exp)
-     
      (expression ("unless" comp-value (arbno "then")
                            exp-batch
                            (arbno "else" exp-batch) "end") unless-exp)
-
      (expression ("while" comp-value (arbno "do") exp-batch "end") while-exp)
      (expression ("until" comp-value (arbno "do") exp-batch "end") until-exp)
-
      (expression ("for" identifier "in" comp-value (arbno "do") exp-batch "end") for-exp)
-
      (expression ("def" identifier "(" (separated-list identifier ",") ")"
                   exp-batch                  
                   "end") function-exp)
@@ -62,19 +50,13 @@
      (complement (calls) comp-calls)
 
      ;;Calls
-     ;; 0 o muchas llamadas
      (calls ((arbno call)) some-calls)
 
      ;;Call
      (call (arguments) arguments-call)
-     ;; (call ("." identifier arguments) a-method-call) ;; Parte 2: Ruby con Objetos
-
+ 
      ;;Argumentos
-     ;; llamar una función puede tener 0 argumentos o muchos
      (arguments ("(" (separated-list comp-value ",") ")") some-arguments)
-     ;; almenos 1 argumento para llamar acceder a un elemento en un arreglo
-     ;; máximo 2, ejemplo: a=[1,2,3]; a[1] #output 2; a[1,2] #output [2,3];
-     ;;                    a[1,2,3] #output Error
      (arguments ("[" comp-value (arbno "," comp-value) "]") arr-arguments)
 
      ;;Valores compuestos
@@ -85,10 +67,7 @@
      (value ("(" comp-value val-compl ")") compl-val)
 
      ;;Complemento para valores
-     ;; llamadas a un valor:
-     ;; Ejemplo: sirve para ("hola"+(mundo())) donde mundo() retorna "mundo"
      (val-compl (calls) val-call) 
-     ;; operacion inorden con otro valor
      (val-compl (bin-op comp-value) binop-val)
 
      ;; Valores simples
@@ -98,7 +77,6 @@
      (simple-value ("true") true-val)
      (simple-value ("false") false-val)
      (simple-value ("nil") nil-val)
-     ;; arreglo con 0 o muchos valores
      (simple-value ("["(separated-list comp-value ",")"]") arr-val)
      
      ;;Operacion Inorden
@@ -118,20 +96,11 @@
      (bin-op ("&&") and-op)
      (bin-op ("or") or-op)
      (bin-op ("||") or-op)
+
      ;;Rangos:
-     ;; Solo admite 2 argumentos, no se puede operar más de 1 vez
-     ;;Inclusivo: va hasta el limite superior
      (bin-op ("..") in-range)
-     ;;Exclusivo: va hasta un step antes del limite superior
      (bin-op ("...") ex-range)
-     ;; Ejemplo: (1..5) => (1 2 3 4 5)
-     ;; Ejemplo: (1...5) => (1 2 3 4)
-     ;; Ejemplo: ((1..5) .. 6) => Error
      (bin-op ("step") st-range)
-     ;; Ejemplo: ((1..5) step 2) => (1 3 5)
-     ;; Ejemplo: ((1..5) step -1) => Error
-     ;; Ejemplo: ((-1..-5) step -2) => (-1 -3 -5)
-     ;; Ejemplo: ((1..-5) step 2) => Error
      
      ;;Operación asignación
      (assign-op ("+=") add-eq)
@@ -184,7 +153,7 @@
    (env environment?)
    ))
 
-;apply-procedure: evalua el cuerpo de un procedimientos en el ambiente extendido correspondiente
+;apply-procedure: evalua el cuerpo de un procedimiento en el ambiente extendido correspondiente
 (define apply-procedure
   (lambda (proc args env)
     (cases procval proc
@@ -192,28 +161,16 @@
                (eval-proc-batch body (extend-env ids args env))))))
   
 ;*******************************************************************************************
-
+;evalua un programa
 (define (eval-program pgm)
   (cases ruby-program pgm
     (a-program (a-batch) (eval-exp-batch a-batch (empty-env)))
     )
   )
 
-(define is-last-exp-a-func
-  (lambda (exps)   
-    (if (empty? exps)
-        #f
-        (if (empty? (cdr exps))
-            (if (is-function-exp? (car exps))
-                (get-function-name (car exps))
-                #f)             
-            (is-last-exp-a-func (cdr exps))))))
-
-(define (get-function-name exp)
-  (cases expression exp
-    (function-exp (name ids batch) name)
-    (else "")))
-
+;evalua un exp-batch,si el resultado de la ultima expresion del batch es un void o un ambiente, imprime un => nil
+;de lo contrario imprimer su resultado.
+;si la ultima expresion fue la definicion de una funcion, imprime el nombre de esta
 (define (eval-exp-batch batch env)
   (cases exp-batch batch
     (a-batch (exp exps) (let ((result (eval-expressions (cons exp exps) env)))
@@ -224,21 +181,14 @@
                                     is-func))
                               result)))))
 
+;evalua el batch de un procedimiento
 (define (eval-proc-batch batch env)
   (cases exp-batch batch
     (a-batch (exp exps)        
               (eval-expressions (cons exp exps) env))))
 
-(define (is-return-exp? exp)
-  (cases expression exp
-    (return-exp (comp-value) #t)
-    (else #f))) 
-
-(define (is-function-exp? exp)
-  (cases expression exp
-    (function-exp (name ids batch) #t)
-    (else #f)))
-
+;evalua una lista de expresiones
+;si una expresion retorna un ambiente, este se pasa a la evaluacion de la siguiente expresion de la lista
 (define (eval-expressions exps env)
  (if (or (empty? (cdr exps)) (is-return-exp? (car exps)))                
      (eval-expression (car exps) env)     
@@ -246,6 +196,7 @@
        (if (environment? next-env) (eval-expressions (cdr exps) next-env)
            (eval-expressions (cdr exps) env)))))
 
+;evalua una expresion
 (define (eval-expression exp env)
   (cases expression exp
     (a-simple-exp (simple-exp) (eval-simple-exp simple-exp env))
@@ -293,14 +244,14 @@
     (for-exp (id comp-value exp-batch)
              (for-each (lambda (x)
                          (eval-exp-batch exp-batch (extend-env (list id) (list x) env)))
-                       (eval-comp-value comp-value env)))
-    
-    (else "TO DO")))
+                       (eval-comp-value comp-value env)))))
 
+;evalua una expresion simple
 (define (eval-simple-exp s-exp env)
   (cases simple-exp s-exp
     (val-exp (simple-value complement) (apply-complement simple-value complement env))))
 
+;evalua los argumentos de los calls, retorna una lista con los argumentos de cada llamado evaluados
 (define (eval-calls-args cls left-value env)
   (cases calls cls
     (some-calls (calls) (if (empty? calls)
@@ -308,6 +259,9 @@
                             (cons (eval-call (car calls) left-value env)
                                   (eval-calls-args (some-calls (cdr calls)) left-value env))))))
 
+;evalua un call teniendo en cuenta quien hace el llamdo
+;si no tiene argumentos se retorna el valor evaluado de la expresion que hizo el llamado
+;si los tiene podría tratarse de un llamado a un procedimiento o de un acceso a una lista
 (define eval-calls
   (lambda (cls left-value env) 
     (let ((args (eval-calls-args cls left-value env))
@@ -325,12 +279,7 @@
                     (car result)
                     result)))))))
               
-
-(define (is-comp-calls-empty cls env)
-  (cases calls cls
-    (some-calls (cls) (empty? cls))                            
-    (else "")))
-
+;evalua un complemento
 (define (apply-complement s-val compl env)
   (cases complement compl
     (assign (comp-value calls)
@@ -348,11 +297,13 @@
                       result))))   
     (comp-calls (calls) (eval-calls calls s-val env))))                                        
 
+;evalua un comp-value
 (define (eval-comp-value c-value env)
   (cases comp-value c-value
     (a-value (value) (eval-value value env))
     (unop-value (un-op comp-value) (eval-un-op (eval-comp-value comp-value env)))))
 
+;evalua la negacion
 (define eval-un-op
   (lambda (val)
     (cond
@@ -360,6 +311,7 @@
       ((eqv? val "false") "true")
       (else (eopl:error 'eval-un-op "Not a bool")))))      
 
+;evalua un value
 (define (eval-value a-value env)
   (cases value a-value
     (a-s-val (simple-value)(if (symbol? (eval-simple-value simple-value env))
@@ -367,16 +319,20 @@
                                (eval-simple-value simple-value env)))
     (compl-val (comp-value val-compl) (eval-val-compl comp-value val-compl env))))
 
+;evalua un val-compl
 (define (eval-val-compl comp-value v-compl env)
   (cases val-compl v-compl
     (val-call (calls) (eval-calls calls comp-value env))
     (binop-val (bin-op comp-v) (apply-op bin-op (list (eval-comp-value  comp-value env) (eval-comp-value comp-v env))))))
 
+;evalua un call
 (define (eval-call cl s-val env)
   (cases call cl
     (arguments-call (arguments) (eval-args arguments s-val env))
     (else "")))
 
+;evalua los argumentos de un call teniendo en cuenta quien hizo el llamado
+;retorna error si algo que no es un procedimiento intenta hacer un llamado con ()
 (define (eval-args args s-val env)
   (cases arguments args
     (some-arguments (comp-values) (if (simple-value? s-val)                                     
@@ -391,6 +347,7 @@
                          
     (arr-arguments (comp-value comp-values) (map (lambda (x) (eval-comp-value x env)) (cons comp-value comp-values)))))
 
+;evalua un simple-value
 (define (eval-simple-value s-val env)
   (cases simple-value s-val
     (id-val  (identifier)  identifier)
@@ -401,6 +358,7 @@
     (nil-val   () "nil")
     (arr-val   (comp-value) (map (lambda (x) (eval-comp-value x env)) comp-value))))
 
+;evalua un bin-op
 (define (apply-op op args)
   (cases bin-op op
      (add ()  (operacion args 'suma))
@@ -421,10 +379,12 @@
      (ex-range () (rango (car args) (cadr args) 'ex))
      (st-range () (steps (car args) (cadr args)))))
 
+;traduce de un bool de ruby a uno de racket
 (define eval-bool
   (lambda (val)
     (if (eqv? val "true") #t #f)))
 
+;evalua un assign-op
 (define (apply-assign op arg1 arg2)
   (cases assign-op op
     (add-eq () (+ arg1 arg2))
@@ -432,6 +392,36 @@
     (mult-eq () (* arg1 arg2))
     (div-eq () (/ arg1 arg2))
     (pow-eq () (expt arg1 arg2))))
+
+#|.......................................FUNCIONES AUXILIARES............................................|#
+;evualua si la ultima expresion de un batch es una definicion de una funcion, de serlo retorna el nombre de ella
+(define is-last-exp-a-func
+  (lambda (exps)   
+    (if (empty? exps)
+        #f
+        (if (empty? (cdr exps))
+            (if (is-function-exp? (car exps))
+                (get-function-name (car exps))
+                #f)             
+            (is-last-exp-a-func (cdr exps))))))
+
+;retorna el nombre de una funcion a partir de un function-exp
+(define (get-function-name exp)
+  (cases expression exp
+    (function-exp (name ids batch) name)
+    (else "")))
+
+;evalua si una expresion es de tipo return-exp
+(define (is-return-exp? exp)
+  (cases expression exp
+    (return-exp (comp-value) #t)
+    (else #f))) 
+
+;evalua si una expresion es de tipo function-exp
+(define (is-function-exp? exp)
+  (cases expression exp
+    (function-exp (name ids batch) #t)
+    (else #f)))
     
 #|Función que opera seguún el tipo de dato que contenga la lista|#
 (define (operacion lista sys)
@@ -465,7 +455,7 @@ ya se trate de una suma o una multiplicación, los puedo operar de manera común
                                  (* (car lista) (cadr lista)))]
     #|Si no cumple ninguna, entonces se trata de un arreglo y debo usar funciones auxiliares|#
     [else (if (eq? sys 'suma)
-              (append (car lista) (cadr lista))             ;|CAMBIO
+              (append (car lista) (cadr lista))             
               (duplicar (car lista) (cadr lista)))]))
 
 #|Duplica el contenido de una lista n veces|#
@@ -802,20 +792,5 @@ lis-compare = lista|#
           )
     ))
 
-; #Ejemplos:
-; > (eval-range (inclusive 1 10 1))
-; (1 2 3 4 5 6 7 8 9 10)
-; > (eval-range (exclusive 1 10 1))
-; (1 2 3 4 5 6 7 8 9)
-; > (eval-range (inclusive 1 -10 1))
-; . . Step: bad step
-; > (eval-range (inclusive -1 10 -1))
-; . . Step: bad step
-
-;ruby def fact(n) if (n == 0) then return 1; else puts "el valor de n es ",n; return (n * (fact ((n - 1)))); end end puts "el factorial de 5 es", (fact(5)); end
-;*******************************************************************************************
-;*******************************************************************************************
-; ruby def print(v) puts v; end print(2); end
 (interpretador)
 
-;ruby def fact(n) if (n == 0) then return 1; else return (n*(fact((n - 1)))); end end fact(5); end

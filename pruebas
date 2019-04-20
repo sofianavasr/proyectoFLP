@@ -1,155 +1,166 @@
-OPERACIONES BÁSICAS:
-ruby puts(2+2); end       #->  4
-ruby puts(2 - 2);         #->  0
-ruby puts(2*2);           #->  4
-ruby puts(2/2);           #->  1
-     puts(2 % 2);         #->  0
-     puts(2 ** 2);        #->  4
-     puts(2>2);           #->  false
-     puts(2>=2);          #->  true
-     puts(4<=2);          #->  false 
-     puts(4==4);          #->  true
-     puts(4!=4);          #->  false
-     puts(true and true); #->  true
-     puts(true && false); #->  false
-     puts(true or false); #->  true
-     puts(false || false);#->  false
-     puts(not (2>5));     #->  true
-     puts(! true);        #->  false
-     puts(1..5);          #->  (1 2 3 4 5)
-     puts(1...5);         #->  (1 2 3 4)
-     puts((1..5) .. 6);   #->  Error
-     puts((1..5) step 2); #->  (1 3 5)
-     puts((-1..-5) step -2);#->(-1 -3 -5)
-     puts((1..-5) step 2);#->  Step: bad step
-     puts((1..5) step -1);#->  Step: bad step
-end
+......................................................................................................
+........................................OPERACIONES BÁSICAS...........................................
+......................................................................................................
 
-ruby puts (1+(2+(3+4))); end
-Resultado: 10
+ruby puts(2+2); end              #->  4
+ruby puts(2 - 2); end            #->  0
+ruby puts(2*2); end              #->  4
+ruby puts(2/2); end              #->  1
+ruby puts(2 % 2); end            #->  0
+ruby puts(2 ** 2); end           #->  4
+ruby puts(2>2); end              #->  false
+ruby puts(2>=2); end             #->  true
+ruby puts(4<=2); end             #->  false 
+ruby puts(4==4); end             #->  true
+ruby puts(4!=4); end             #->  false
+ruby puts(true and true); end    #->  true
+ruby puts(true && false); end    #->  false
+ruby puts(true or false); end    #->  true
+ruby puts(false || false);end    #->  false
+ruby puts(not (2>5)); end        #->  true
+ruby puts(! true); end           #->  false
+ruby puts(1..5); end             #->  (1 2 3 4 5)
+ruby puts(1...5); end            #->  (1 2 3 4)
+ruby puts((1..5) .. 6); end      #->  Error
+ruby puts((1..5) step 2); end    #->  (1 3 5)
+ruby puts((-1..-5) step -2); end #->  (-1 -3 -5)
+ruby puts((1..-5) step 2); end   #->  Step: bad step
+ruby puts((1..5) step -1); end   #->  Step: bad step
+ruby puts (1+(2+(3+4))); end     #->  10
+ruby puts ((1+2)+(3+4)); end     #->  10
+ruby puts ((1+(2+3))+4); end     #->  10
+ruby puts ("hola"+" mundo"); end	 #-> hola mundo
+ruby puts (["hola"]+["mundo"]); end      #-> ("hola" "mundo")
+ruby puts ("hola"+2); end                #-> Error
+ruby puts (2+"hola"); end                #-> Error
+ruby puts ("hola"*2); end                #-> holahola
+ruby puts ([1,2]*2); end                 #-> (1 2 1 2)
 
-ruby puts ((1+2)+(3+4)); end
-Resultado: 10
+......................................................................................................
+.......................................EXPRESION DECLARE-EXP..........................................
+......................................................................................................
 
-ruby puts ((1+(2+3))+4); end
-Resultado: 10
+ruby declare a; a = 3; puts (a/" mundo"); end 
+# Error
 
-ruby puts ("hola"+" mundo"); end
-Resultado: hola mundo
-
-ruby puts (["hola"]+["mundo"]); end
-Resultado: ("hola" "mundo")
-
-ruby puts ("hola"+2); end
-Resultado: Error
-
-ruby puts (2+"hola"); end
-Resultado: Error
-
-ruby puts ("hola"*2); end
-Resultado: holahola
-
-ruby declare a; a = 3; puts (a/" mundo"); end
-Resultado: String can’t be coerced into Integer
-
-ruby puts ([1,2]*2) end
-Resultado: (1 2 1 2)
-
-ruby declare a,b,c; a = 5; b = 6; c = 10; puts a,b,c; end
-Resultado: 5
-           6
-           10
-           =>nil
+ruby declare a,b,c; a = 5; b = 6; c = 10; puts a,b,c; end     
+# 5							      
+# 6
+# 10
+# => nil							      
 
 ruby declare a,b,c; b = 6; c = 10; puts a,b,c; end
-Resultado: nil
-           6
-           10
-           =>nil
+# nil
+# 6
+# 10
+# => nil
+
 ruby declare a,b,c; b = 6; c = 10; puts a,b,d; end
-Resultado: Error: undefined local variable or method d
+# Error: undefined local variable or method d
 
 ruby puts d; declare d; end
-Resultado: Error: undefined local variable or method d
+# Error: undefined local variable or method d
+
+......................................................................................................
+.........................................EXPRESION SIMPLE.............................................
+......................................................................................................
 
 ruby declare a; a = 5; puts a; a += 1; puts a; end
-Resultado: 5
-           6
-           =>nil
+# 5
+# 6
+# => nil
 
 ruby def print (val) puts val; end print("hola mundo"); end
-Resultado: hola mundo
-           =>nil
+# hola mundo
+# => nil
 
 ruby def add1(val) val += 1; return val; end add1(100); end
-Resultado: 101
+# 101
 
 ruby declare a; a = [[1,2],3]; puts (a[0][0]); end
-Resultado: 1
-           =>nil
+# 1
+# => nil
 
 ruby declare a; a = [1,2,3,4,5,6,7]; puts (a[0,4]); puts (a[-1,-4]); end
-Resultado: (1 2 3 4 5)
-           Error
-ruby declare a; a = [[1,[[1,[100,[101,102,[0]]],3,4],2,3,3],3,4],2,3,4,5,6,7,8,9,10]; puts(a[0][1][0][1][1][2][0]); end
-Resultado: (0)
+# (1 2 3 4 5)
+#  Error
 
-ruby def fact(n) if (n == 0) then return 1; else puts "el valor de n es ",n; return (n*(fact((n - 1)))); end end puts "el factorial de 5 es",(fact(5)); end
-Resultado: el valor de n es
-           5
-           el valor de n es
-           4
-           el valor de n es
-           3
-           el valor de n es
-           2
-           el valor de n es
-           1
-           el factorial de 5 es
-           120
-           =>nil
+ruby declare a; a = [[1,[[1,[100,[101,102,[0]]],3,4],2,3,3],3,4],2,3,4,5,6,7,8,9,10]; puts(a[0][1][0][1][1][2][0]); end
+# 0
+# => nil
+
+......................................................................................................
+.......................................EXPRESION FUNCTION-EXP.........................................
+......................................................................................................
+
+ruby def fact(n) if (n == 0) then return 1; else puts "el valor de n es ",n; return (n*(fact((n - 1)))); end end puts "el factorial de 5 es", (fact(5)); end
+# el valor de n es
+# 5
+# el valor de n es
+# 4
+# el valor de n es
+# 3
+# el valor de n es
+# 2
+# el valor de n es
+# 1
+# el factorial de 5 es
+# 120
+# => nil
 
 ruby def fibo(n) if (n<=2) then return 1; else declare left,right; left = (n - 1); right = (n - 2); return ((fibo(left))+(fibo(right))); end end puts (fibo(10)); end
-Resultado: 55
-           =>nil
+# 55
+# => nil
 
-ruby def to_text(num) declare text; text = ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve"]; return (text[num]); end to_text(  5  ); end
-Resultado: "cinco"
+ruby def to_text(num) declare text; text = ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve"]; return (text[num]); end to_text(5); end
+# "cinco"
 
 ruby def hola() return "mundo"; end end
-Resultado: hola
+# hola
 
 ruby def hola() return "mundo"; end puts hola; end
-Resultado: #0=#(struct:closure ()
+	 #0=#(struct:closure ()
            #(struct:a-batch #(struct:return-exp
            #(struct:op-value #(struct:simple-val
            #(struct:str-val "mundo")))) ())
            #(struct:extended-env-record (hola)
            #(#0#) #(struct:empty-env-record)))
-           =>nil
+           => nil
+
+......................................................................................................
+.......................................EXPRESION IF-EXP...............................................
+......................................................................................................
 
 ruby declare x; x = 3; if (x>5) then puts x; elsif (x<3) then puts "mundo"; else puts "hola"; else puts "otro else"; end end
 Resultado: #si x = 3
            hola
-           =>nil
+           => nil
            #si x = 2
            mundo
-           =>nil
+           => nil
            #si x = 6
            6
-           =>nil
+           => nil
+
+......................................................................................................
+.......................................EXPRESION UNLESS...............................................
+......................................................................................................
 
 ruby unless false then puts 4; end end
 Resultado: 4
-           =>nil
+           => nil
 
 ruby unless true then puts 4; else puts "hola mundo"; end end
 Resultado: hola mundo
-           =>nil
+           => nil
 
-ruby unless true then puts 4 else puts "hola mundo" else puts "otro else" end end
+ruby unless true then puts 4; else puts "hola mundo"; else puts "otro else"; end end
 Resultado: hola mundo
-           =>nil
+           => nil
+
+......................................................................................................
+..............................EXPRESION WHILE-EXP UNTIL-EXP...........................................
+......................................................................................................
 
 ruby declare x; x = 0; while (x<10) do puts x; x += 1; end end
 Resultado: 0
@@ -162,7 +173,7 @@ Resultado: 0
            7
            8
            9
-           #<void>
+           => nil
 
 ruby declare x; x = 0; until (x>=10) do puts x; x += 1; end end
 Resultado: 0
@@ -175,7 +186,11 @@ Resultado: 0
            7
            8
            9
-           #<void>
+           => nil
+
+......................................................................................................
+..............................EXPRESION WHILE-EXP UNTIL-EXP...........................................
+......................................................................................................
 
 ruby for x in (1..6) do puts x; end end
 Resultado: 1
@@ -184,7 +199,7 @@ Resultado: 1
            4
            5
            6
-           =>nil
+           => nil
 
 ruby for x in (1...6) do puts x; end end
 Resultado: 1
@@ -192,7 +207,7 @@ Resultado: 1
            3
            4
            5
-           =>nil
+           => nil
 
 ruby for x in ((1..10) step 2) do puts x; end end
 Resultado: 1
@@ -200,16 +215,16 @@ Resultado: 1
            5
            7
            9
-           =>nil
+           => nil
 
 ruby for x in [1,2,3] do puts x; end end
 Resultado: 1
            2
            3
-           =>nil
+           => nil
 
 ruby declare a; a = [1,2,3]; for x in a do puts x; end end
 Resultado: 1
            2
            3
-           =>nil
+           => nil
