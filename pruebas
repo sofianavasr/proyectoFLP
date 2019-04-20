@@ -94,7 +94,7 @@ Resultado: (1 2 3 4 5)
 ruby declare a; a = [[1,[[1,[100,[101,102,[0]]],3,4],2,3,3],3,4],2,3,4,5,6,7,8,9,10]; puts(a[0][1][0][1][1][2][0]); end
 Resultado: (0)
 
-ruby def fact(n) if (n == 0) then return 1; else puts "el valor de n es ",n; return (n*(fact((n-1)))); end end puts "el factorial de 5 es",(fact(5)); end
+ruby def fact(n) if (n == 0) then return 1; else puts "el valor de n es ",n; return (n*(fact((n - 1)))); end end puts "el factorial de 5 es",(fact(5)); end
 Resultado: el valor de n es
            5
            el valor de n es
@@ -109,7 +109,7 @@ Resultado: el valor de n es
            120
            =>nil
 
-ruby def fibo(n) if (n<=2) then return 1; else declare left,right; left = (n-1); right = (n-2); return ((fibo(left))+(fibo(right))); end end puts (fibo(10)); end
+ruby def fibo(n) if (n<=2) then return 1; else declare left,right; left = (n - 1); right = (n - 2); return ((fibo(left))+(fibo(right))); end end puts (fibo(10)); end
 Resultado: 55
            =>nil
 
