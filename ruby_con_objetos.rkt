@@ -40,6 +40,7 @@
                   exp-batch                  
                   "end") function-exp)
      (expression ("return" comp-value ";") return-exp)
+     (expression ("super" identifier arguments ";") super-exp)
 
      (class-decl ("class" identifier
                           (arbno "<" identifier)
@@ -256,7 +257,14 @@
     (for-exp (id comp-value exp-batch)
              (for-each (lambda (x)
                          (eval-proc-batch exp-batch (extend-env (list id) (list x) env)))
-                       (eval-comp-value comp-value env)))))
+                       (eval-comp-value comp-value env)))
+    (super-exp (method-name arguments)
+               (let ((args (eval-super-args arguments env))
+                     (obj (apply-env env 'self)))
+                 (find-method-and-apply method-name
+                                        (apply-env env '%super)
+                                        obj
+                                        args)))))
 
 ;evalua una expresion simple
 (define (eval-simple-exp s-exp env)
@@ -357,20 +365,33 @@
       (id-val (val) val)
       (else #f))))
 
+(define eval-super-args
+  (lambda (args env)
+    (cases arguments args
+      (some-arguments (comp-values) (map (lambda (x) (eval-comp-value x env)) comp-values))
+      (else (eopl:error eval-super-args "Argument not valid")))))
+
 ;evalua un call
 (define (eval-call cl s-val env)
   (cases call cl
     (arguments-call (arguments) (eval-args arguments s-val env))
-    (a-method-call (id arguments) (if (simple-value? s-val)
-                                      (find-method-and-apply id
-                                                             (object->class-name (apply-env env (get-id s-val)))
-                                                             (apply-env env (get-id s-val))
-                                                             (eval-method-args arguments env)) ;; is a variable
-                                      (let ((c-decl (lookup-class (get-class-id s-val env))))
+    (a-method-call (id arguments) (cond
+                                    ((simple-value? s-val)
+                                    (find-method-and-apply id
+                                                           (object->class-name (apply-env env (get-id s-val)))
+                                                           (apply-env env (get-id s-val))
+                                                           (eval-method-args arguments env))) ;; is a variable
+                                    ((identifier? s-val)
+                                     (find-method-and-apply id
+                                                           (object->class-name (apply-env env s-val))
+                                                           (apply-env env s-val)
+                                                           (eval-method-args arguments env)))
+                                      (else (let ((c-decl (lookup-class (get-class-id s-val env))))
                                         (if (or (eqv? id 'new) (eqv? id 'New))
                                             (let ((obj (new-object (get-class-id s-val env))))
                                               (find-method-and-apply 'initialize (get-class-id s-val env) obj (eval-method-args arguments env)) obj)
-                                            (eopl:error 'eval-call "Can't apply method to a class"))))) ;; is a class
+                                            (let ((obj (new-object (get-class-id s-val env))))
+                                              (find-method-and-apply 'initialize (get-class-id s-val env) obj (eval-method-args arguments env)) obj)))))) ;; is a class
                                         
     (else "")))
 
@@ -900,7 +921,7 @@ lis-compare = lista|#
   (lambda (class-name)
     (if (and (list? class-name) (empty? class-name));;(eqv? class-name 'object)
       '()
-      (let ((c-decl (lookup-class class-name)))
+      (let ((c-decl (if (and (list? class-name) (not (empty? class-name))) (lookup-class (car class-name)) (lookup-class class-name))))
         (cons
           (make-first-part c-decl)
           (new-object (class-decl->super-name c-decl)))))))
@@ -916,18 +937,25 @@ lis-compare = lista|#
 ;;; methods are represented by their declarations.  They are closed
 ;;; over their fields at application time, by apply-method.
 
+(define clean-host-name
+  (lambda (host-name)
+    (if (and (list? host-name) (not (empty? host-name)))
+        (car host-name)
+        host-name)))
+
 (define find-method-and-apply
   (lambda (m-name host-name self args)
     (if (eqv? host-name 'object)
-      (eopl:error 'find-method-and-apply
-        "No method for name ~s" m-name)
-      (let ((m-decl (lookup-method-decl m-name
-                      (class-name->method-decls host-name))))
-        (if (method-decl? m-decl)
-          (apply-method m-decl host-name self args)
-          (find-method-and-apply m-name 
-            (class-name->super-name host-name)
-            self args))))))
+        (eopl:error 'find-method-and-apply
+                    "No method for name ~s" m-name)
+        (let ((h-name (clean-host-name host-name)))
+          (let ((m-decl (lookup-method-decl m-name
+                                            (class-name->method-decls h-name))))
+            (if (method-decl? m-decl)
+                (apply-method m-decl h-name self args)
+                (find-method-and-apply m-name 
+                                       (class-name->super-name h-name)
+                                       self args)))))))
 
 (define view-object-as
   (lambda (parts class-name)
