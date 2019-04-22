@@ -276,8 +276,8 @@
 ;si los tiene podría tratarse de un llamado a un procedimiento o de un acceso a una lista
 (define eval-calls
   (lambda (cls left-value env)
-    (let ((args (eval-calls-args cls left-value env))) (pretty-display args)
-      (if (and (list? args) (not (empty? args)) (not (empty? (car args))) (part? (car (car args))))
+    (let ((args (eval-calls-args cls left-value env)))
+      (if (and (list? args) (not (empty? args)) (not (empty? (car args)))) ;;(part? (car (car args))))
           (car args)
           (let ((left-value-evaluated (if (simple-value? left-value)
                                           (apply-env env (eval-simple-value left-value env))
@@ -351,20 +351,27 @@
     (some-arguments (comp-values) (map (lambda (x) (eval-comp-value x env)) comp-values))
     (else (eopl:error 'Error "No args"))))
 
+(define get-id
+  (lambda (sv)
+    (cases simple-value sv
+      (id-val (val) val)
+      (else #f))))
+
 ;evalua un call
 (define (eval-call cl s-val env)
   (cases call cl
     (arguments-call (arguments) (eval-args arguments s-val env))
-    (a-method-call (id arguments) (let ((c-decl (lookup-class (get-class-id s-val env))))
-                                    (if c-decl
+    (a-method-call (id arguments) (if (simple-value? s-val)
+                                      (find-method-and-apply id
+                                                             (object->class-name (apply-env env (get-id s-val)))
+                                                             (apply-env env (get-id s-val))
+                                                             (eval-method-args arguments env)) ;; is a variable
+                                      (let ((c-decl (lookup-class (get-class-id s-val env))))
                                         (if (or (eqv? id 'new) (eqv? id 'New))
-                                             (let ((obj (new-object (get-class-id s-val env))))
-                                               (find-method-and-apply 'initialize (get-class-id s-val env) obj (eval-method-args arguments env)) obj)
-                                             (eopl:error 'eval-call "Can't apply method to a class")) ;; is a class
-                                        (find-method-and-apply id
-                                                               (object->class-name (apply-env env (get-class-id s-val env)))
-                                                               (apply-env env (get-class-id s-val env))
-                                                               (eval-method-args arguments env))))) ;; is a variable
+                                            (let ((obj (new-object (get-class-id s-val env))))
+                                              (find-method-and-apply 'initialize (get-class-id s-val env) obj (eval-method-args arguments env)) obj)
+                                            (eopl:error 'eval-call "Can't apply method to a class"))))) ;; is a class
+                                        
     (else "")))
 
 ;evalua los argumentos de un call teniendo en cuenta quien hizo el llamado
